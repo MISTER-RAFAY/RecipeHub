@@ -3,12 +3,12 @@ import PaddleCheckout from "@/components/paddle-checkout";
 import { Button } from "@/components/ui/button";
 
 export default function PricingPage() {
-  // ⚠️ CRITICAL: Go to Paddle Dashboard > Catalog to get these REAL IDs
+  // ✅ I FIXED THE MISSING COMMA BELOW
   const PRICES = {
-    monthly: "pri_01hxxxx...",   // Replace with your Monthly Price ID
-    sixMonth: "pri_01hyyyy...",  // Replace with your 6-Month Price ID
-    yearly: "pri_01hzzzz...",    // Replace with your Yearly Price ID
-    lifetime: "pri_01haaaa..."   // Replace with your Lifetime Price ID
+    monthly: "pri_01kfec2bwrj3vwzfe8q1hqbdjp",   // <--- Added comma here
+    sixMonth: "pri_01kfegd2ez4j54kbw05dp33abc",
+    yearly: "pri_01kfeg7cm6p22p39g6aasem41a",
+    lifetime: "pri_01kfeg9zfeqckjyj2q7r5ktj4t"
   };
 
   return (
@@ -23,10 +23,10 @@ export default function PricingPage() {
 
       {/* The Pricing Grid */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
-        <PaddleCheckout planName="Monthly ($5)" priceId={PRICES.monthly} />
-        <PaddleCheckout planName="6 Months ($25)" priceId={PRICES.sixMonth} />
-        <PaddleCheckout planName="Yearly ($45)" priceId={PRICES.yearly} />
-        <PaddleCheckout planName="Lifetime ($99)" priceId={PRICES.lifetime} />
+        <PaddleCheckout planName="Monthly ($49)" priceId={PRICES.monthly} />
+        <PaddleCheckout planName="6 Months ($99)" priceId={PRICES.sixMonth} />
+        <PaddleCheckout planName="Yearly ($199)" priceId={PRICES.yearly} />
+        <PaddleCheckout planName="Lifetime ($499)" priceId={PRICES.lifetime} />
       </div>
     </div>
   );
