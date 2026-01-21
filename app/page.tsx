@@ -1,41 +1,38 @@
-import { Navigation } from "@/components/navigation"
-import { HeroSection } from "@/components/hero-section"
-import { RecipeGrid } from "@/components/recipe-grid"
+"use client";
 
-export default function HomePage() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+export default function SignUpPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate Signup
+    localStorage.setItem("isLoggedIn", "true");
+    router.push("/");
+    setTimeout(() => window.location.reload(), 100);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main>
-        <HeroSection />
-        <RecipeGrid />
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-muted/50 border-t border-border py-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-primary mb-4">RecipeHub</h3>
-            <p className="text-muted-foreground mb-6">
-              Your culinary journey starts here. Discover, cook, and share amazing recipes.
-            </p>
-            <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">
-                About
-              </a>
-              <a href="#" className="hover:text-primary transition-colors">
-                Contact
-              </a>
-              <a href="#" className="hover:text-primary transition-colors">
-                Privacy
-              </a>
-              <a href="#" className="hover:text-primary transition-colors">
-                Terms
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 shadow-lg rounded-lg">
+        <h2 className="text-3xl font-bold text-center text-gray-900">Create Account</h2>
+        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
+          <input type="email" required placeholder="Email" className="w-full border p-2 rounded" 
+             onChange={(e) => setEmail(e.target.value)} />
+          <input type="password" required placeholder="Password" className="w-full border p-2 rounded" 
+             onChange={(e) => setPassword(e.target.value)} />
+          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white">Sign Up</Button>
+        </form>
+        <p className="text-center text-sm">
+          Already have an account? <Link href="/signin" className="text-green-600 font-bold">Sign In</Link>
+        </p>
+      </div>
     </div>
-  )
+  );
 }
