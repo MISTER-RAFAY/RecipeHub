@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-// ❌ Removed "next/image" import to avoid conflicts
 
 // Real-looking data
 const RECIPES = [
@@ -25,8 +24,9 @@ export default function RecipesPage() {
   const [daysLeft, setDaysLeft] = useState(14);
   const [isLocked, setIsLocked] = useState(false);
   
-  // POPUP STATE
+  // POPUP STATES
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false); // 🆕 New State for Limit
   const [selectedRecipe, setSelectedRecipe] = useState("");
 
   // 1. CHECK FREE TRIAL STATUS
@@ -51,10 +51,9 @@ export default function RecipesPage() {
 
   // 2. HANDLE CLICKING A RECIPE
   const handleViewRecipe = (recipeTitle: string) => {
+    // 🆕 If locked, SHOW THE STYLISH LIMIT MODAL (Instead of redirecting immediately)
     if (isLocked) {
-      if(confirm("🔒 Your free trial limit reached! Subscribe to view unlimited recipes.")) {
-        router.push("/pricing");
-      }
+      setShowLimitModal(true);
       return;
     }
 
@@ -68,10 +67,6 @@ export default function RecipesPage() {
     if (newCount >= 3) {
       setIsLocked(true);
     }
-  };
-
-  const closeModal = () => {
-    setShowSuccessModal(false);
   };
 
   return (
@@ -112,14 +107,12 @@ export default function RecipesPage() {
         {RECIPES.map((recipe) => (
           <div key={recipe.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col">
             <div className="relative h-56 w-full">
-              
-              {/* ✅ CHANGED TO STANDARD IMG TAG TO FIX BROKEN IMAGES */}
+              {/* Standard IMG tag to ensure images load */}
               <img 
                 src={recipe.image} 
                 alt={recipe.title} 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
-              
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
                 {recipe.time}
               </div>
@@ -156,7 +149,7 @@ export default function RecipesPage() {
         ))}
       </div>
 
-      {/* STYLISH HOVER PAGE (MODAL) */}
+      {/* 🟢 SUCCESS MODAL (Free Trial Active) */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl transform transition-all scale-100 border-4 border-green-50">
@@ -174,9 +167,45 @@ export default function RecipesPage() {
                 You have {3 - viewedCount} free {3 - viewedCount === 1 ? 'trial' : 'trials'} left
               </p>
             </div>
-            <Button onClick={closeModal} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200">
+            <Button onClick={() => setShowSuccessModal(false)} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200">
               Continue to Recipe
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 🔴 LIMIT REACHED MODAL (Trial Over) */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl transform transition-all scale-100 border-t-8 border-red-600">
+            
+            {/* Lock Icon */}
+            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6 animate-pulse">
+              <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Limit Reached</h2>
+            <p className="text-gray-500 mb-6 text-lg">
+              You've enjoyed your 3 free recipes. To see this recipe and unlock thousands more, please upgrade.
+            </p>
+
+            <div className="space-y-3">
+              <Link href="/pricing" className="block w-full">
+                <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-6 text-lg rounded-xl shadow-xl shadow-red-200 hover:scale-[1.02] transition-transform">
+                  Unlock Unlimited Access
+                </Button>
+              </Link>
+              
+              <Button 
+                onClick={() => setShowLimitModal(false)} 
+                variant="ghost" 
+                className="w-full text-gray-400 hover:text-gray-600"
+              >
+                Maybe Later
+              </Button>
+            </div>
           </div>
         </div>
       )}
