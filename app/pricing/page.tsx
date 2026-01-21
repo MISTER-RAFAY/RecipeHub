@@ -8,7 +8,7 @@ export default function PricingPage() {
     monthly: "pri_01kfec2bwrj3vwzfe8q1hqbdjp",   // <--- Added comma here
     sixMonth: "pri_01kfegd2ez4j54kbw05dp33abc",
     yearly: "pri_01kfeg7cm6p22p39g6aasem41a",
-    lifetime: "pri_01kfeg9zfeqckjyj2q7r5ktj4t"
+    lifetime: "pri_01kfeg9zfeqckjyj2q7r5ktj4t",
   };
 
   return (
