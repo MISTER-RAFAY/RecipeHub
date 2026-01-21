@@ -30,7 +30,9 @@ export default function RecipesPage() {
   // POPUP STATES
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState("");
+  
+  // UPDATED: Initialize as null instead of empty string to hold the object
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
 
   useEffect(() => {
     // Load Trial Data
@@ -53,7 +55,7 @@ export default function RecipesPage() {
     setSavedIds(saved);
   }, []);
 
-  // ❤️ NEW: FUNCTION TO TOGGLE SAVE
+  // ❤️ FUNCTION TO TOGGLE SAVE
   const toggleSave = (id: number, e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger the view recipe click
     
@@ -68,7 +70,8 @@ export default function RecipesPage() {
     localStorage.setItem("savedRecipeIds", JSON.stringify(newSaved));
   };
 
-  const handleViewRecipe = (recipeTitle: string) => {
+  // UPDATED: Now accepts the whole recipe object instead of just the title
+  const handleViewRecipe = (recipe: any) => {
     if (isLocked) {
       setShowLimitModal(true);
       return;
@@ -76,7 +79,10 @@ export default function RecipesPage() {
     const newCount = viewedCount + 1;
     localStorage.setItem("recipesViewed", newCount.toString());
     setViewedCount(newCount);
-    setSelectedRecipe(recipeTitle);
+    
+    // Store the whole recipe object
+    setSelectedRecipe(recipe);
+    
     setShowSuccessModal(true);
     if (newCount >= 3) setIsLocked(true);
   };
@@ -147,7 +153,8 @@ export default function RecipesPage() {
                 A delicious and authentic dish that is perfect for any meal.
               </p>
               <Button 
-                onClick={() => handleViewRecipe(recipe.title)}
+                // UPDATED: Pass the entire recipe object here
+                onClick={() => handleViewRecipe(recipe)}
                 className={`w-full py-6 text-lg font-medium shadow-none transition-all ${isLocked ? "bg-gray-100 text-gray-400" : "bg-green-600 hover:bg-green-700 text-white"}`}
               >
                 {isLocked ? "🔒 Locked" : "View Recipe"}
@@ -157,13 +164,21 @@ export default function RecipesPage() {
         ))}
       </div>
 
-      {/* MODALS (Keep existing Success/Limit Modals here) */}
-      {showSuccessModal && (
+      {/* MODALS */}
+      {showSuccessModal && selectedRecipe && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Recipe Unlocked!</h2>
-            <p className="text-green-700 font-bold mb-4">{selectedRecipe}</p>
-            <Button onClick={() => setShowSuccessModal(false)} className="w-full bg-green-600 text-white">Continue</Button>
+            {/* Display title from the object */}
+            <p className="text-green-700 font-bold mb-4">{selectedRecipe.title}</p>
+            
+            {/* UPDATED: Button now navigates to the specific recipe ID */}
+            <Button 
+              onClick={() => router.push(`/recipes/${selectedRecipe.id}`)} 
+              className="w-full bg-green-600 text-white"
+            >
+              Continue
+            </Button>
           </div>
         </div>
       )}
