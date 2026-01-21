@@ -18,16 +18,23 @@ export default function SignUpPage() {
     // ⚠️ SIMULATION: This fakes a backend registration
     // In a real app, you would send this data to Supabase/Firebase/Database here.
     
-    // 1. Save user session
+    // 1. Save user session (Logs them in)
     localStorage.setItem("isLoggedIn", "true");
 
-    // 2. Wait a tiny bit to simulate network
+    // 2. 🟢 START FREE TRIAL LOGIC
+    // Saves today's date so we can track the 14-day limit
+    localStorage.setItem("trialStartDate", new Date().toISOString()); 
+    // Resets the view count to 0 so they get their 3 free recipes
+    localStorage.setItem("recipesViewed", "0"); 
+    // -------------------------------------
+
+    // 3. Wait a tiny bit to simulate network
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // 3. Redirect to Home
+    // 4. Redirect to Home
     router.push("/");
     
-    // 4. Force navbar update
+    // 5. Force navbar update to show "My Account"
     setTimeout(() => {
         window.location.reload();
     }, 100);
