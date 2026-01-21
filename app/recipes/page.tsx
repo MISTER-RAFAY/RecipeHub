@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
+// ❌ Removed "next/image" import to avoid conflicts
 
 // Real-looking data
 const RECIPES = [
@@ -25,7 +25,7 @@ export default function RecipesPage() {
   const [daysLeft, setDaysLeft] = useState(14);
   const [isLocked, setIsLocked] = useState(false);
   
-  // 🆕 NEW STATE FOR THE POPUP
+  // POPUP STATE
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState("");
 
@@ -51,7 +51,6 @@ export default function RecipesPage() {
 
   // 2. HANDLE CLICKING A RECIPE
   const handleViewRecipe = (recipeTitle: string) => {
-    // If locked, redirect to pricing
     if (isLocked) {
       if(confirm("🔒 Your free trial limit reached! Subscribe to view unlimited recipes.")) {
         router.push("/pricing");
@@ -59,18 +58,13 @@ export default function RecipesPage() {
       return;
     }
 
-    // Increment View Count
     const newCount = viewedCount + 1;
     localStorage.setItem("recipesViewed", newCount.toString());
     setViewedCount(newCount);
 
-    // Save title for the popup
     setSelectedRecipe(recipeTitle);
-
-    // 🆕 SHOW THE STYLISH MODAL
     setShowSuccessModal(true);
 
-    // Check if we need to lock NEXT time
     if (newCount >= 3) {
       setIsLocked(true);
     }
@@ -78,14 +72,12 @@ export default function RecipesPage() {
 
   const closeModal = () => {
     setShowSuccessModal(false);
-    // Here you would normally redirect to the recipe details page
-    // router.push(`/recipes/details`); 
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
       
-      {/* 🟢 TRIAL STATUS BANNER */}
+      {/* TRIAL STATUS BANNER */}
       <div className={`max-w-7xl mx-auto mb-10 rounded-lg p-4 flex flex-col md:flex-row justify-between items-center shadow-sm ${isLocked ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
         <div className="flex items-center gap-3 mb-2 md:mb-0">
           <span className="text-2xl">{isLocked ? "🔒" : "🎁"}</span>
@@ -120,12 +112,14 @@ export default function RecipesPage() {
         {RECIPES.map((recipe) => (
           <div key={recipe.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col">
             <div className="relative h-56 w-full">
-              <Image 
+              
+              {/* ✅ CHANGED TO STANDARD IMG TAG TO FIX BROKEN IMAGES */}
+              <img 
                 src={recipe.image} 
                 alt={recipe.title} 
-                fill 
-                className="object-cover hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
+              
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
                 {recipe.time}
               </div>
@@ -162,33 +156,24 @@ export default function RecipesPage() {
         ))}
       </div>
 
-      {/* 🟢 STYLISH HOVER PAGE (MODAL) */}
+      {/* STYLISH HOVER PAGE (MODAL) */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl transform transition-all scale-100 border-4 border-green-50">
-            
-            {/* Animated Icon */}
             <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
               <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Recipe Unlocked!</h2>
-            <p className="text-gray-600 mb-2">
-              You have successfully opened:
-            </p>
+            <p className="text-gray-600 mb-2">You have successfully opened:</p>
             <p className="text-green-700 font-bold text-lg mb-6">"{selectedRecipe}"</p>
-
             <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 mb-8">
-              <p className="text-sm text-yellow-800 font-medium">
-                Thank you!
-              </p>
+              <p className="text-sm text-yellow-800 font-medium">Thank you!</p>
               <p className="text-2xl font-bold text-gray-800 mt-1">
                 You have {3 - viewedCount} free {3 - viewedCount === 1 ? 'trial' : 'trials'} left
               </p>
             </div>
-
             <Button onClick={closeModal} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200">
               Continue to Recipe
             </Button>
