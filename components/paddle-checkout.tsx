@@ -12,7 +12,7 @@ export default function PaddleCheckout({ priceId, planName }: { priceId: string,
   useEffect(() => {
     initializePaddle({ 
       environment: 'sandbox', // Change to 'production' later
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN! 
+      token: process.env.test_9b7b38bef870e438dd576d90ad3! 
     }).then(
       (paddleInstance) => {
         if (paddleInstance) {
