@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 1. We paste the data here so this page knows about the recipes too.
-// (In a real app, you would fetch this from a database)
+// SAME DATA AS BEFORE
 const RECIPES = [
   { id: 1, title: "Classic Spaghetti Carbonara", time: "30 min", difficulty: "Medium", image: "/food/carbonara.jpg", description: "A classic Italian pasta dish made with eggs, hard cheese, cured pork, and black pepper." },
   { id: 2, title: "Avocado Toast Supreme", time: "10 min", difficulty: "Easy", image: "/food/avocado.jpg", description: "Crispy toast topped with creamy avocado, radish, and seasonings." },
@@ -16,13 +17,19 @@ const RECIPES = [
 ];
 
 export default function RecipeDetailPage({ params }: { params: { id: string } }) {
-  // 2. Find the recipe that matches the ID in the URL
+  // 1. Find the recipe that matches the ID in the URL
   const recipeId = parseInt(params.id);
   const recipe = RECIPES.find((r) => r.id === recipeId);
 
-  // 3. If recipe doesn't exist (e.g. /recipes/999), show 404
+  // 2. If recipe doesn't exist, show simple error or 404
   if (!recipe) {
-    return notFound();
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center">
+            <h1 className="text-4xl font-bold mb-4">404</h1>
+            <p className="mb-4">Recipe not found.</p>
+            <Link href="/" className="text-blue-500 underline">Go Back</Link>
+        </div>
+    );
   }
 
   return (
@@ -31,7 +38,7 @@ export default function RecipeDetailPage({ params }: { params: { id: string } })
         
         {/* Back Button */}
         <div className="p-6 border-b border-gray-100">
-          <Link href="/" className="text-green-600 font-bold hover:underline">
+          <Link href="/recipes" className="text-green-600 font-bold hover:underline">
             ← Back to All Recipes
           </Link>
         </div>
@@ -42,7 +49,8 @@ export default function RecipeDetailPage({ params }: { params: { id: string } })
             src={recipe.image} 
             alt={recipe.title} 
             className="w-full h-full object-cover"
-            // Fallback for broken images
+            // This onError is what caused the crash. 
+            // Adding "use client" at the top fixes it.
             onError={(e) => { 
                 const target = e.target as HTMLImageElement;
                 target.src = "https://placehold.co/800x400?text=No+Image"; 
