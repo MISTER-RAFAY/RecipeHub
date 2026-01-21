@@ -18,7 +18,7 @@ export default function PaddleCheckout({ planName, priceId }: PaddleCheckoutProp
     initializePaddle({ 
       environment: 'sandbox', 
       // ⚠️ DOUBLE CHECK: Does this token start with 'test_'?
-      token: 'test_9b7b38bef870e438dd576d90ad3', // <--- PASTE YOUR REAL TOKEN HERE
+      token: 'test_85ba0ecc9ef60893790b460fdd8', // <--- PASTE YOUR REAL TOKEN HERE
       eventCallback: (event) => {
         // 👇 THIS WILL PRINT THE ERROR TO YOUR CONSOLE
         console.log("Paddle Event:", event); 
