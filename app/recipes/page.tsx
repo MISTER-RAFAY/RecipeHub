@@ -5,17 +5,73 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Real-looking data
+// 👇 HERE IS WHERE YOU SET YOUR IMAGES MANUALLY
+// Make sure you have a folder named 'food' inside your 'public' folder.
 const RECIPES = [
-  { id: 1, title: "Classic Spaghetti Carbonara", time: "30 min", difficulty: "Medium", image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80" },
-  { id: 2, title: "Avocado Toast Supreme", time: "10 min", difficulty: "Easy", image: "https://images.unsplash.com/photo-1588137372308-15f75323ca8d?auto=format&fit=crop&w=800&q=80" },
-  { id: 3, title: "Homemade Margherita Pizza", time: "45 min", difficulty: "Hard", image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80" },
-  { id: 4, title: "Healthy Berry Smoothie", time: "5 min", difficulty: "Easy", image: "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?auto=format&fit=crop&w=800&q=80" },
-  { id: 5, title: "Grilled Atlantic Salmon", time: "25 min", difficulty: "Medium", image: "https://images.unsplash.com/photo-1485921325833-c519f76c4974?auto=format&fit=crop&w=800&q=80" },
-  { id: 6, title: "Chocolate Lava Cake", time: "40 min", difficulty: "Medium", image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476d?auto=format&fit=crop&w=800&q=80" },
-  { id: 7, title: "Fresh Garden Salad", time: "15 min", difficulty: "Easy", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80" },
-  { id: 8, title: "Juicy Beef Burger", time: "20 min", difficulty: "Medium", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80" },
-  { id: 9, title: "Japanese Ramen", time: "60 min", difficulty: "Hard", image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80" },
+  { 
+    id: 1, 
+    title: "Classic Spaghetti Carbonara", 
+    time: "30 min", 
+    difficulty: "Medium", 
+    // 👇 Change this to match your file name in public/food/
+    image: "/food/carbonara.jpg" 
+  },
+  { 
+    id: 2, 
+    title: "Avocado Toast Supreme", 
+    time: "10 min", 
+    difficulty: "Easy", 
+    image: "/food/avocado.jpg" 
+  },
+  { 
+    id: 3, 
+    title: "Homemade Margherita Pizza", 
+    time: "45 min", 
+    difficulty: "Hard", 
+    image: "/food/pizza.jpg" 
+  },
+  { 
+    id: 4, 
+    title: "Healthy Berry Smoothie", 
+    time: "5 min", 
+    difficulty: "Easy", 
+    image: "/food/smoothie.jpg" 
+  },
+  { 
+    id: 5, 
+    title: "Grilled Atlantic Salmon", 
+    time: "25 min", 
+    difficulty: "Medium", 
+    image: "/food/salmon.jpg" 
+  },
+  { 
+    id: 6, 
+    title: "Chocolate Lava Cake", 
+    time: "40 min", 
+    difficulty: "Medium", 
+    image: "/food/cake.jpg" 
+  },
+  { 
+    id: 7, 
+    title: "Fresh Garden Salad", 
+    time: "15 min", 
+    difficulty: "Easy", 
+    image: "/food/salad.jpg" 
+  },
+  { 
+    id: 8, 
+    title: "Juicy Beef Burger", 
+    time: "20 min", 
+    difficulty: "Medium", 
+    image: "/food/burger.jpg" 
+  },
+  { 
+    id: 9, 
+    title: "Japanese Ramen", 
+    time: "60 min", 
+    difficulty: "Hard", 
+    image: "/food/ramen.jpg" 
+  },
 ];
 
 export default function RecipesPage() {
@@ -26,7 +82,7 @@ export default function RecipesPage() {
   
   // POPUP STATES
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showLimitModal, setShowLimitModal] = useState(false); // 🆕 New State for Limit
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState("");
 
   // 1. CHECK FREE TRIAL STATUS
@@ -51,7 +107,6 @@ export default function RecipesPage() {
 
   // 2. HANDLE CLICKING A RECIPE
   const handleViewRecipe = (recipeTitle: string) => {
-    // 🆕 If locked, SHOW THE STYLISH LIMIT MODAL (Instead of redirecting immediately)
     if (isLocked) {
       setShowLimitModal(true);
       return;
@@ -112,6 +167,10 @@ export default function RecipesPage() {
                 src={recipe.image} 
                 alt={recipe.title} 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                // Fallback for broken images
+                onError={(e) => {
+                  e.currentTarget.src = "https://placehold.co/600x400?text=No+Image";
+                }}
               />
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
                 {recipe.time}
