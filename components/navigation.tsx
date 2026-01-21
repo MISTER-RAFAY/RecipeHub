@@ -1,28 +1,13 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+// 👇 Import Clerk Components
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export function Navigation() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user, setUser] = useState(false); // Keeps track if user is logged in
-
-  // ⚠️ SIMULATION: Check if user is logged in
-  // If you use Clerk/NextAuth, replace this with: const { data: session } = useSession();
-  useEffect(() => {
-    // For now, we check if a dummy 'userToken' exists in browser storage
-    const loggedIn = localStorage.getItem("isLoggedIn");
-    if (loggedIn) {
-      setUser(true);
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setUser(false);
-    window.location.href = "/"; // Redirect to home
-  };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
     { name: "Home", href: "/" },
@@ -30,14 +15,12 @@ export function Navigation() {
     { name: "Categories", href: "/categories" },
     { name: "Pricing", href: "/pricing" },
     { name: "My Recipes", href: "/my-recipes" },
-  ]
+  ];
 
   return (
     <nav className="bg-background/95 backdrop-blur sticky top-0 z-50 w-full border-b border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
-          {/* Logo */}
           <Link href="/">
             <h1 className="text-2xl font-bold text-primary cursor-pointer">RecipeHub</h1>
           </Link>
@@ -52,29 +35,24 @@ export function Navigation() {
               ))}
             </div>
 
-            {/* 👇 DYNAMIC BUTTON LOGIC 👇 */}
-            {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-bold text-green-600">My Account</span>
-                <Button onClick={handleLogout} variant="outline" size="sm" className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100">
-                  Logout
-                </Button>
-              </div>
-            ) : (
-              <Link href="/signin">
-                <Button variant="outline" size="sm">Sign In</Button>
-              </Link>
-            )}
-            {/* 👆 END DYNAMIC BUTTON 👆 */}
+            {/* 👇 CLERK LOGIC START */}
+            <div className="flex items-center gap-4">
+              {/* Show this if user is Logged IN */}
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
 
-          </div>
-
-          {/* Mobile Logic (Simplified for brevity - add 'user' check here too if needed) */}
-          <div className="md:hidden">
-             {/* ... keep your existing mobile button code ... */}
+              {/* Show this if user is Logged OUT */}
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button variant="outline" size="sm">Sign In</Button>
+                </SignInButton>
+              </SignedOut>
+            </div>
+            {/* 👆 CLERK LOGIC END */}
           </div>
         </div>
       </div>
     </nav>
-  )
+  );
 }

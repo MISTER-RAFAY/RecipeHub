@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from '@clerk/nextjs'; // 👈 IMPORT THIS
 import "./globals.css";
-
-// 👇 IMPORTANT: Make sure this path points to where you saved your Navigation file
-// If your file is in a folder named 'components', this is correct.
 import { Navigation } from "@/components/navigation"; 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,16 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        {/* 👇 This makes the Navigation bar appear on EVERY page */}
-        <Navigation />
-        
-        {/* This renders the page content (Home, Pricing, etc.) underneath */}
-        <main>
-          {children}
-        </main>
-      </body>
-    </html>
+    // 👇 THIS WRAPPER IS REQUIRED FOR CLERK TO WORK
+    <ClerkProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          <Navigation />
+          <main>{children}</main>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
