@@ -6,12 +6,12 @@ import Link from "next/link"; // 1. Import this
 const CategoriesPage = () => {
   // Your existing data structure likely looks like this
   const categories = [
-    { name: "Appetizers", count: 45, image: "/path/to/img", desc: "Start your meal with delicious small bites" },
-    { name: "Main Courses", count: 128, image: "/path/to/img", desc: "Hearty and satisfying dishes for your main meal" },
-    { name: "Desserts", count: 67, image: "/path/to/img", desc: "Sweet treats to end your meal perfectly" },
-    { name: "Breakfast", count: 52, image: "/path/to/img", desc: "Start your day right" },
-    { name: "Lunch", count: 89, image: "/path/to/img", desc: "Mid-day fuel" },
-    { name: "Dinner", count: 94, image: "/path/to/img", desc: "Evening feasts" },
+    { name: "Appetizers", count: 4, image: "/path/to/img", desc: "Start your meal with delicious small bites" },
+    { name: "Main Courses", count: 4, image: "/path/to/img", desc: "Hearty and satisfying dishes for your main meal" },
+    { name: "Desserts", count: 4, image: "/path/to/img", desc: "Sweet treats to end your meal perfectly" },
+    { name: "Breakfast", count: 4, image: "/path/to/img", desc: "Start your day right" },
+    { name: "Lunch", count: 4, image: "/path/to/img", desc: "Mid-day fuel" },
+    { name: "Dinner", count: 4, image: "/path/to/img", desc: "Evening feasts" },
   ];
 
   return (
@@ -38,7 +38,8 @@ const CategoriesPage = () => {
 
             {/* Replace your existing Link with this one */}
             <Link
-              href={`/recipes?category=${category.name}`}
+              // This sends them to: /categories/breakfast  or /categories/lunch
+              href={`/categories/${category.name.toLowerCase()}`}
               className="text-green-600 font-semibold hover:text-green-700 flex items-center mt-4"
             >
               Explore recipes &gt;
