@@ -1,102 +1,166 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/nextjs";
 
-// 1. Mock Data for demonstration
-const recipesData = [
-  { id: 1, title: "Classic Delight", time: "30 min", cal: "400 kcal", img: "bg-orange-100" },
-  { id: 2, title: "Spicy Special", time: "45 min", cal: "550 kcal", img: "bg-red-100" },
-  { id: 3, title: "Healthy Bowl", time: "20 min", cal: "320 kcal", img: "bg-green-100" },
-  { id: 4, title: "Chef's Choice", time: "60 min", cal: "600 kcal", img: "bg-yellow-100" },
-];
+// 1. UPDATED MOCK DATA (With more Main Courses)
+const categoryData: any = {
+  "appetizers": [
+    { id: 1, title: "Mozzarella Sticks", time: "15 min", img: "bg-red-100", desc: "Crispy cheesy goodness." },
+    { id: 2, title: "Bruschetta", time: "10 min", img: "bg-green-100", desc: "Tomato and basil on toast." },
+    { id: 3, title: "Chicken Wings", time: "30 min", img: "bg-orange-100", desc: "Spicy buffalo wings." },
+  ],
+  // 👇 UPDATED MAIN COURSES HERE
+  "main-courses": [
+    { id: 4, title: "Grilled Ribeye Steak", time: "45 min", img: "bg-red-200", desc: "Perfectly seared beef with garlic butter." },
+    { id: 5, title: "Roast Chicken", time: "60 min", img: "bg-yellow-100", desc: "Herb crusted whole chicken with vegetables." },
+    { id: 6, title: "Vegetable Lasagna", time: "50 min", img: "bg-green-100", desc: "Cheesy pasta layers with spinach and marinara." },
+    { id: 7, title: "Spaghetti Bolognese", time: "35 min", img: "bg-red-100", desc: "Classic Italian meat sauce over fresh pasta." },
+    { id: 8, title: "Beef Tacos", time: "25 min", img: "bg-orange-50", desc: "Seasoned ground beef with fresh salsa." },
+  ],
+  "breakfast": [
+    { id: 101, title: "Fluffy Pancakes", time: "20 min", img: "bg-orange-100", desc: "Classic buttermilk pancakes." },
+    { id: 102, title: "Avocado Toast", time: "10 min", img: "bg-green-100", desc: "Healthy start to the day." },
+    { id: 103, title: "Omelette Supreme", time: "15 min", img: "bg-yellow-100", desc: "Cheese and veggie packed." },
+  ],
+  "lunch": [
+    { id: 201, title: "Chicken Caesar Salad", time: "25 min", img: "bg-green-100", desc: "Fresh and crunchy." },
+    { id: 202, title: "Grilled Cheese", time: "15 min", img: "bg-orange-100", desc: "Melty perfection." },
+    { id: 203, title: "Tomato Soup", time: "20 min", img: "bg-red-100", desc: "Creamy and rich." },
+  ],
+  "dinner": [
+    { id: 301, title: "Steak & Potatoes", time: "45 min", img: "bg-red-100", desc: "Hearty meal." },
+    { id: 302, title: "Pasta Alfredo", time: "30 min", img: "bg-yellow-100", desc: "Creamy white sauce." },
+    { id: 303, title: "Salmon Fillet", time: "25 min", img: "bg-orange-100", desc: "Pan seared with lemon." },
+  ],
+  "desserts": [
+    { id: 401, title: "Chocolate Lava Cake", time: "60 min", img: "bg-amber-900", desc: "Rich and moist." },
+    { id: 402, title: "Cheesecake", time: "4 hours", img: "bg-yellow-50", desc: "New York style." },
+    { id: 403, title: "Ice Cream Sundae", time: "5 min", img: "bg-pink-100", desc: "Vanilla with sprinkles." },
+  ]
+};
 
-const CategoryDetailPage = () => {
+const CategoryPage = () => {
+  const router = useRouter();
   const params = useParams();
-  const categoryName = params.categoryName; // Gets 'breakfast', 'lunch', etc.
+  const { isLoaded, userId } = useAuth();
+  
+  const [isPremium, setIsPremium] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
-  // 2. State to simulate if user is premium (Set to FALSE to see the lock screen)
-  const [isPremium, setIsPremium] = useState(false); 
+  // Normalize category name
+  const rawCategory = Array.isArray(params.categoryName) ? params.categoryName[0] : params.categoryName;
+  const safeCategory = rawCategory?.toLowerCase() || "";
+  
+  // Fetch recipes
+  const recipes = categoryData[safeCategory] || [];
+
+  // 2. AUTH & PREMIUM LOGIC (KEPT SAME)
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // A. Must be Signed In
+    if (!userId) {
+      router.push("/sign-in");
+      return;
+    }
+
+    // B. Must be Premium (Checking LocalStorage)
+    const premiumStatus = localStorage.getItem("isPremium");
+    if (premiumStatus === "true") {
+      setIsPremium(true);
+    } else {
+      setIsPremium(false);
+    }
+    
+    setCheckingStatus(false);
+
+  }, [isLoaded, userId, router]);
+
+  if (!isLoaded || checkingStatus) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <p className="mt-4 text-gray-500">Checking subscription...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-12 px-4 relative min-h-screen">
-      
-      {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold capitalize mb-2">{categoryName} Recipes</h1>
-        <p className="text-gray-600">Here are the top rated recipes for {categoryName}</p>
-      </div>
-
-      {/* 
-         THE CONTENT AREA 
-         If user is NOT premium, we add a 'blur' effect and disable clicks 
-      */}
-      <div className={`${!isPremium ? "blur-md pointer-events-none select-none" : ""}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {recipesData.map((recipe) => (
-            <div key={recipe.id} className="bg-white rounded-xl shadow-lg border p-4">
-              {/* Fake Image Placeholder */}
-              <div className={`h-40 w-full rounded-md mb-4 ${recipe.img} flex items-center justify-center text-gray-400`}>
-                Recipe Image
-              </div>
-              
-              <h3 className="text-xl font-bold mb-2">{recipe.title}</h3>
-              <p className="text-sm text-gray-500 mb-4">{recipe.time} • {recipe.cal}</p>
-              
-              {/* Detail Text */}
-              <p className="text-gray-600 text-sm mb-4">
-                A delicious recipe perfectly curated for your {categoryName} needs. 
-                Full ingredients list and steps included.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-md text-sm font-semibold border">
-                  💾 Save
-                </button>
-                <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-md text-sm font-semibold border">
-                  🖨️ Print
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-50 relative">
+      <div className="container mx-auto py-12 px-4">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold capitalize text-gray-900">{safeCategory.replace("-", " ")} Recipes</h1>
+          <Link href="/categories">
+              <Button variant="outline">← Back to Categories</Button>
+          </Link>
         </div>
-      </div>
 
-      {/* 
-         THE PREMIUM LOCK OVERLAY 
-         This only shows if isPremium is false
-      */}
-      {!isPremium && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pt-20">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-lg border border-gray-200">
-            <div className="mb-4 text-5xl">🔒</div>
-            <h2 className="text-3xl font-bold mb-2 text-gray-900">Premium Content</h2>
-            <p className="text-gray-600 mb-8">
-              To view these exclusive <strong>{categoryName}</strong> recipes, save them to your cookbook, or print them, you need to unlock full access.
-            </p>
-            
-            <div className="space-y-3">
-              <Link href="/pricing" className="block w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">
-                Upgrade to Premium
-              </Link>
+        {/* 
+            3. CONTENT AREA 
+            - If isPremium is FALSE, we add 'blur-md' and disable clicks 
+        */}
+        <div className={`transition-all duration-300 ${!isPremium ? "blur-md pointer-events-none select-none opacity-60" : ""}`}>
+           {recipes.length === 0 ? (
+             <div className="text-center py-20 bg-white rounded-xl shadow-sm">
+                 <h2 className="text-2xl text-gray-500">More recipes coming soon!</h2>
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               {recipes.map((recipe: any) => (
+                 <div key={recipe.id} className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-xl transition">
+                   {/* Placeholder Image */}
+                   <div className={`h-48 w-full ${recipe.img} flex items-center justify-center text-gray-500 font-bold`}>
+                     {recipe.title}
+                   </div>
+                   
+                   <div className="p-6">
+                     <div className="flex justify-between items-center mb-2">
+                         <h3 className="text-xl font-bold text-gray-800">{recipe.title}</h3>
+                         <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">⏱ {recipe.time}</span>
+                     </div>
+                     <p className="text-gray-600 mb-4 text-sm">{recipe.desc}</p>
+                     
+                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                       View Full Recipe
+                     </Button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+        </div>
+
+        {/* 
+            4. PAYWALL OVERLAY 
+            - This only shows if isPremium is FALSE
+        */}
+        {!isPremium && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pt-20">
+            <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg w-full border border-gray-100 animate-in zoom-in-95 duration-300">
+              <div className="text-6xl mb-6">🔒</div>
+              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Premium Content</h2>
+              <p className="text-gray-500 mb-8 leading-relaxed">
+                To view recipes in the <strong>{safeCategory.replace("-", " ")}</strong> category, you must be a premium subscriber.
+              </p>
               
-              <div className="flex justify-center gap-4 text-sm mt-4">
-                <Link href="/signin" className="text-green-600 font-semibold hover:underline">
-                  Sign In
-                </Link>
-                <span className="text-gray-400">|</span>
-                <Link href="/signup" className="text-green-600 font-semibold hover:underline">
-                  Sign Up
-                </Link>
-              </div>
+              <Link href="/pricing" className="block w-full">
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg rounded-xl shadow-lg hover:shadow-green-500/30 transition-all">
+                  Subscribe Now
+                </Button>
+              </Link>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
+      </div>
     </div>
   );
 };
 
-export default CategoryDetailPage;
+export default CategoryPage;

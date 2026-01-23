@@ -10,8 +10,8 @@ import { useAuth } from "@clerk/nextjs";
 export default function PricingPage() {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle>();
+  const [isPremium, setIsPremium] = useState(false); // Track Subscription status
   
-  // Clerk Auth Check
   const { isLoaded, userId } = useAuth();
 
   const PRICES = {
@@ -22,14 +22,18 @@ export default function PricingPage() {
   };
 
   useEffect(() => {
-    // Wait for Clerk to load
     if (!isLoaded) return;
 
-    // If no user, redirect to sign in
     if (!userId) {
       router.push("/sign-in");
     } else {
-      // User is logged in, load Paddle
+      // 1. Check if user has already paid
+      const premiumStatus = localStorage.getItem("isPremium");
+      if (premiumStatus === "true") {
+        setIsPremium(true);
+      }
+
+      // 2. Load Paddle
       initializePaddle({ 
         environment: 'sandbox', 
         token: 'test_85ba0ecc9ef60893790b460fdd8' 
@@ -39,14 +43,17 @@ export default function PricingPage() {
     }
   }, [isLoaded, userId, router]);
 
-  // ✅ FIXED openCheckout FUNCTION
   const openCheckout = (priceId: string) => {
+    if (isPremium) {
+        alert("You are already subscribed!");
+        return;
+    }
+
     if (!paddle) {
       alert("Loading payment system...");
       return;
     }
 
-    // Automatically get the current domain (localhost or vercel)
     const currentDomain = window.location.origin; 
 
     paddle.Checkout.open({
@@ -54,13 +61,11 @@ export default function PricingPage() {
       settings: {
         displayMode: "overlay",
         theme: "light",
-        // Dynamically uses the correct domain
         successUrl: `${currentDomain}/checkout/success`, 
       }
     });
   };
 
-  // Loading State
   if (!isLoaded || !userId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -70,27 +75,29 @@ export default function PricingPage() {
     );
   }
 
-  // Main Content
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
       <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 className="text-4xl font-extrabold text-gray-900">Choose Your Plan</h1>
-            <p className="text-gray-500 mt-2">Unlock unlimited access to all recipes.</p>
+            <h1 className="text-4xl font-extrabold text-gray-900">
+                {isPremium ? "Your Subscription" : "Choose Your Plan"}
+            </h1>
+            <p className="text-gray-500 mt-2">
+                {isPremium ? "You have unlimited access to all features." : "Unlock unlimited access to all recipes."}
+            </p>
         </div>
         <Link href="/">
           <Button variant="outline">Back to Home</Button>
         </Link>
       </div>
 
-      {/* Pricing Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <PricingCard 
           title="Monthly" 
           price="$49" 
           description="Billed every month"
           onClick={() => openCheckout(PRICES.monthly)}
+          isSubscribed={isPremium}
         />
         <PricingCard 
           title="6 Months" 
@@ -98,27 +105,30 @@ export default function PricingPage() {
           description="Save on half-year"
           onClick={() => openCheckout(PRICES.sixMonth)}
           highlight
+          isSubscribed={isPremium}
         />
         <PricingCard 
           title="Yearly" 
           price="$199" 
           description="Best value for money"
           onClick={() => openCheckout(PRICES.yearly)}
+          isSubscribed={isPremium}
         />
         <PricingCard 
           title="Lifetime" 
           price="$499" 
           description="One-time payment"
           onClick={() => openCheckout(PRICES.lifetime)}
+          isSubscribed={isPremium}
         />
       </div>
     </div>
   ); 
 }
 
-function PricingCard({ title, price, description, onClick, highlight = false }: any) {
+function PricingCard({ title, price, description, onClick, highlight = false, isSubscribed = false }: any) {
     return (
-        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all hover:scale-105 duration-300 flex flex-col ${highlight ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-200'}`}>
+        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 flex flex-col ${highlight ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-200'} ${isSubscribed ? 'opacity-75' : 'hover:scale-105'}`}>
             {highlight && <div className="bg-green-500 text-white text-center text-xs font-bold py-1 uppercase tracking-wide">Most Popular</div>}
             <div className="p-8 flex-grow flex flex-col items-center text-center">
                 <h3 className="text-xl font-bold text-gray-900">{title}</h3>
@@ -131,12 +141,23 @@ function PricingCard({ title, price, description, onClick, highlight = false }: 
                     <li className="flex items-center">✅ Save Favorites</li>
                     <li className="flex items-center">✅ Print Support</li>
                 </ul>
-                <Button 
-                    onClick={onClick} 
-                    className={`w-full font-bold py-6 ${highlight ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                >
-                    Subscribe
-                </Button>
+                
+                {/* LOGIC TO CHANGE BUTTON TEXT */}
+                {isSubscribed ? (
+                    <Button 
+                        disabled 
+                        className="w-full font-bold py-6 bg-gray-300 text-gray-600 cursor-not-allowed"
+                    >
+                        Active
+                    </Button>
+                ) : (
+                    <Button 
+                        onClick={onClick} 
+                        className={`w-full font-bold py-6 ${highlight ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                    >
+                        Subscribe
+                    </Button>
+                )}
             </div>
         </div>
     )
