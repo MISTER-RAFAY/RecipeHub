@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
-// 👇 1. IMPORT CLERK HOOK
 import { useAuth } from "@clerk/nextjs";
 
 export default function PricingPage() {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle>();
   
-  // 👇 2. USE CLERK TO CHECK LOGIN STATUS
+  // Clerk Auth Check
   const { isLoaded, userId } = useAuth();
 
   const PRICES = {
@@ -26,7 +25,7 @@ export default function PricingPage() {
     // Wait for Clerk to load
     if (!isLoaded) return;
 
-    // 👇 3. IF NO USER ID, REDIRECT TO SIGN IN
+    // If no user, redirect to sign in
     if (!userId) {
       router.push("/sign-in");
     } else {
@@ -40,23 +39,28 @@ export default function PricingPage() {
     }
   }, [isLoaded, userId, router]);
 
-
+  // ✅ FIXED openCheckout FUNCTION
   const openCheckout = (priceId: string) => {
     if (!paddle) {
       alert("Loading payment system...");
       return;
     }
+
+    // Automatically get the current domain (localhost or vercel)
+    const currentDomain = window.location.origin; 
+
     paddle.Checkout.open({
       items: [{ priceId: priceId, quantity: 1 }],
       settings: {
         displayMode: "overlay",
         theme: "light",
-        successUrl: "http://localhost:3000/checkout/success", 
+        // Dynamically uses the correct domain
+        successUrl: `${currentDomain}/checkout/success`, 
       }
     });
   };
 
-  // 👇 4. LOADING STATE (While Clerk checks if user is logged in)
+  // Loading State
   if (!isLoaded || !userId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -66,7 +70,7 @@ export default function PricingPage() {
     );
   }
 
-  // MAIN CONTENT
+  // Main Content
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       {/* Header */}
