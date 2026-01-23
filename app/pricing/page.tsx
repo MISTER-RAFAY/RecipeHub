@@ -10,10 +10,13 @@ import { useAuth } from "@clerk/nextjs";
 export default function PricingPage() {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle>();
-  const [isPremium, setIsPremium] = useState(false); // Track Subscription status
+  
+  // State to track WHICH plan is active
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
   
   const { isLoaded, userId } = useAuth();
 
+  // Your Price IDs
   const PRICES = {
     monthly: "pri_01kfec2bwrj3vwzfe8q1hqbdjp",
     sixMonth: "pri_01kfegd2ez4j54kbw05dp33abc",
@@ -27,13 +30,12 @@ export default function PricingPage() {
     if (!userId) {
       router.push("/sign-in");
     } else {
-      // 1. Check if user has already paid
-      const premiumStatus = localStorage.getItem("isPremium");
-      if (premiumStatus === "true") {
-        setIsPremium(true);
+      // 1. Check LocalStorage for the SPECIFIC active plan ID
+      const storedPlanId = localStorage.getItem("activePlanId");
+      if (storedPlanId) {
+        setActivePlanId(storedPlanId);
       }
 
-      // 2. Load Paddle
       initializePaddle({ 
         environment: 'sandbox', 
         token: 'test_85ba0ecc9ef60893790b460fdd8' 
@@ -44,11 +46,6 @@ export default function PricingPage() {
   }, [isLoaded, userId, router]);
 
   const openCheckout = (priceId: string) => {
-    if (isPremium) {
-        alert("You are already subscribed!");
-        return;
-    }
-
     if (!paddle) {
       alert("Loading payment system...");
       return;
@@ -61,7 +58,8 @@ export default function PricingPage() {
       settings: {
         displayMode: "overlay",
         theme: "light",
-        successUrl: `${currentDomain}/checkout/success`, 
+        // 👇 UPDATED: We pass the 'plan' ID to the success URL so we can save it later
+        successUrl: `${currentDomain}/checkout/success?plan=${priceId}`, 
       }
     });
   };
@@ -80,10 +78,10 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 className="text-4xl font-extrabold text-gray-900">
-                {isPremium ? "Your Subscription" : "Choose Your Plan"}
+                {activePlanId ? "Your Subscription" : "Choose Your Plan"}
             </h1>
             <p className="text-gray-500 mt-2">
-                {isPremium ? "You have unlimited access to all features." : "Unlock unlimited access to all recipes."}
+                Unlock unlimited access to all recipes.
             </p>
         </div>
         <Link href="/">
@@ -97,7 +95,8 @@ export default function PricingPage() {
           price="$49" 
           description="Billed every month"
           onClick={() => openCheckout(PRICES.monthly)}
-          isSubscribed={isPremium}
+          // 👇 Check if THIS specific plan matches the stored one
+          isActive={activePlanId === PRICES.monthly}
         />
         <PricingCard 
           title="6 Months" 
@@ -105,30 +104,30 @@ export default function PricingPage() {
           description="Save on half-year"
           onClick={() => openCheckout(PRICES.sixMonth)}
           highlight
-          isSubscribed={isPremium}
+          isActive={activePlanId === PRICES.sixMonth}
         />
         <PricingCard 
           title="Yearly" 
           price="$199" 
           description="Best value for money"
           onClick={() => openCheckout(PRICES.yearly)}
-          isSubscribed={isPremium}
+          isActive={activePlanId === PRICES.yearly}
         />
         <PricingCard 
           title="Lifetime" 
           price="$499" 
           description="One-time payment"
           onClick={() => openCheckout(PRICES.lifetime)}
-          isSubscribed={isPremium}
+          isActive={activePlanId === PRICES.lifetime}
         />
       </div>
     </div>
   ); 
 }
 
-function PricingCard({ title, price, description, onClick, highlight = false, isSubscribed = false }: any) {
+function PricingCard({ title, price, description, onClick, highlight = false, isActive = false }: any) {
     return (
-        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 flex flex-col ${highlight ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-200'} ${isSubscribed ? 'opacity-75' : 'hover:scale-105'}`}>
+        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 flex flex-col ${highlight ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-200'} ${isActive ? 'ring-2 ring-green-600 shadow-xl' : 'hover:scale-105'}`}>
             {highlight && <div className="bg-green-500 text-white text-center text-xs font-bold py-1 uppercase tracking-wide">Most Popular</div>}
             <div className="p-8 flex-grow flex flex-col items-center text-center">
                 <h3 className="text-xl font-bold text-gray-900">{title}</h3>
@@ -142,13 +141,17 @@ function PricingCard({ title, price, description, onClick, highlight = false, is
                     <li className="flex items-center">✅ Print Support</li>
                 </ul>
                 
-                {/* LOGIC TO CHANGE BUTTON TEXT */}
-                {isSubscribed ? (
+                {/* 
+                   LOGIC UPDATE: 
+                   Only disable and show "Active" if this specific card is the active one.
+                   Otherwise, show "Subscribe" (allowing them to switch plans).
+                */}
+                {isActive ? (
                     <Button 
                         disabled 
-                        className="w-full font-bold py-6 bg-gray-300 text-gray-600 cursor-not-allowed"
+                        className="w-full font-bold py-6 bg-gray-100 text-green-700 border border-green-200 cursor-default"
                     >
-                        Active
+                        ✅ Active Plan
                     </Button>
                 ) : (
                     <Button 

@@ -1,25 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SuccessPage() {
-  const router = useRouter();
+function SuccessContent() {
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // 1. SAVE THE PREMIUM STATUS
-    // This tells the rest of your app (Pricing, Categories, Recipes) that the user paid.
     localStorage.setItem("isPremium", "true");
+
+    // 2. SAVE THE SPECIFIC PLAN ID (Received from Pricing Page URL)
+    const planId = searchParams.get("plan");
+    if (planId) {
+        localStorage.setItem("activePlanId", planId);
+    }
     
-    // Optional: Trigger a storage event so other open tabs update immediately
+    // Trigger storage event for other tabs
     window.dispatchEvent(new Event("storage"));
-  }, []);
+  }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-green-50 p-4 text-center">
-      <div className="bg-white p-10 rounded-2xl shadow-xl max-w-md w-full border border-green-100 animate-in fade-in zoom-in duration-500">
+    <div className="bg-white p-10 rounded-2xl shadow-xl max-w-md w-full border border-green-100 animate-in fade-in zoom-in duration-500">
         
         {/* Success Icon */}
         <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 text-4xl">
@@ -50,6 +54,16 @@ export default function SuccessPage() {
             </Link>
         </div>
       </div>
+  );
+}
+
+export default function SuccessPage() {
+  // Wrap in Suspense because useSearchParams causes client-side rendering requirements
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-green-50 p-4 text-center">
+      <Suspense fallback={<div>Loading...</div>}>
+        <SuccessContent />
+      </Suspense>
     </div>
   );
 }
