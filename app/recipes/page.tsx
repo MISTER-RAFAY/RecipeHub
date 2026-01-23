@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// SAME DATA AS BEFORE
 const RECIPES = [
   { id: 1, title: "Classic Spaghetti Carbonara", time: "30 min", difficulty: "Medium", image: "/food/carbonara.jpg" },
   { id: 2, title: "Avocado Toast Supreme", time: "10 min", difficulty: "Easy", image: "/food/avocado.jpg" },
@@ -31,15 +30,24 @@ export default function RecipesPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   
-  // UPDATED: Initialize as null instead of empty string to hold the object
+  // Holds the selected recipe object
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
 
   useEffect(() => {
-    // Load Trial Data
-    const startDate = localStorage.getItem("trialStartDate");
-    const viewed = parseInt(localStorage.getItem("recipesViewed") || "0");
-    setViewedCount(viewed);
+    // 1. Initialize Trial Start Date if it doesn't exist
+    let startDate = localStorage.getItem("trialStartDate");
+    if (!startDate) {
+        startDate = new Date().toISOString();
+        localStorage.setItem("trialStartDate", startDate);
+    }
 
+    // 2. Load correctly viewed recipes history
+    // We use a list of IDs to ensure the count is accurate across tabs
+    const history = JSON.parse(localStorage.getItem("viewedHistoryIds") || "[]");
+    const count = history.length;
+    setViewedCount(count);
+
+    // 3. Calculate Days Left
     if (startDate) {
       const start = new Date(startDate).getTime();
       const now = new Date().getTime();
@@ -47,44 +55,53 @@ export default function RecipesPage() {
       
       const remaining = 14 - diffDays;
       setDaysLeft(remaining > 0 ? remaining : 0);
-      if (diffDays > 14 || viewed >= 3) setIsLocked(true);
+      
+      // Check if locked based on days OR count
+      if (diffDays > 14 || count >= 3) setIsLocked(true);
     }
 
-    // Load Saved Recipes
+    // Load Saved (Favorited) Recipes
     const saved = JSON.parse(localStorage.getItem("savedRecipeIds") || "[]");
     setSavedIds(saved);
   }, []);
 
-  // ❤️ FUNCTION TO TOGGLE SAVE
   const toggleSave = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // Don't trigger the view recipe click
-    
+    e.stopPropagation();
     let newSaved;
     if (savedIds.includes(id)) {
-      newSaved = savedIds.filter(savedId => savedId !== id); // Remove
+      newSaved = savedIds.filter(savedId => savedId !== id);
     } else {
-      newSaved = [...savedIds, id]; // Add
+      newSaved = [...savedIds, id];
     }
-    
     setSavedIds(newSaved);
     localStorage.setItem("savedRecipeIds", JSON.stringify(newSaved));
   };
 
-  // UPDATED: Now accepts the whole recipe object instead of just the title
   const handleViewRecipe = (recipe: any) => {
-    if (isLocked) {
+    // 1. Get current history from storage
+    const history = JSON.parse(localStorage.getItem("viewedHistoryIds") || "[]");
+    
+    // 2. Check if locked
+    if (isLocked && !history.includes(recipe.id)) {
       setShowLimitModal(true);
       return;
     }
-    const newCount = viewedCount + 1;
-    localStorage.setItem("recipesViewed", newCount.toString());
-    setViewedCount(newCount);
-    
-    // Store the whole recipe object
+
+    // 3. If this is a NEW recipe, add it to history and increase count
+    if (!history.includes(recipe.id)) {
+        const newHistory = [...history, recipe.id];
+        localStorage.setItem("viewedHistoryIds", JSON.stringify(newHistory));
+        
+        const newCount = newHistory.length;
+        setViewedCount(newCount);
+        
+        // Lock immediately if we hit 3
+        if (newCount >= 3) setIsLocked(true);
+    }
+
+    // 4. Open Modal
     setSelectedRecipe(recipe);
-    
     setShowSuccessModal(true);
-    if (newCount >= 3) setIsLocked(true);
   };
 
   return (
@@ -99,7 +116,8 @@ export default function RecipesPage() {
               {isLocked ? "Free Trial Ended" : "Free Trial Active"}
             </h3>
             <p className="text-sm text-gray-600">
-              {isLocked ? "Limit Reached" : `${daysLeft} days remaining • ${3 - viewedCount} free recipes left`}
+              {/* This calculation now uses the state which is synced with LocalStorage */}
+              {isLocked ? "Limit Reached" : `${daysLeft} days remaining • ${Math.max(0, 3 - viewedCount)} free recipes left`}
             </p>
           </div>
         </div>
@@ -118,7 +136,6 @@ export default function RecipesPage() {
         {RECIPES.map((recipe) => (
           <div key={recipe.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col relative group">
             
-            {/* ❤️ SAVE BUTTON (ABSOLUTE POSITION) */}
             <button 
               onClick={(e) => toggleSave(recipe.id, e)}
               className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 shadow-md hover:bg-white transition"
@@ -153,7 +170,6 @@ export default function RecipesPage() {
                 A delicious and authentic dish that is perfect for any meal.
               </p>
               <Button 
-                // UPDATED: Pass the entire recipe object here
                 onClick={() => handleViewRecipe(recipe)}
                 className={`w-full py-6 text-lg font-medium shadow-none transition-all ${isLocked ? "bg-gray-100 text-gray-400" : "bg-green-600 hover:bg-green-700 text-white"}`}
               >
@@ -169,10 +185,7 @@ export default function RecipesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Recipe Unlocked!</h2>
-            {/* Display title from the object */}
             <p className="text-green-700 font-bold mb-4">{selectedRecipe.title}</p>
-            
-            {/* UPDATED: Button now navigates to the specific recipe ID */}
             <Button 
               onClick={() => router.push(`/recipes/${selectedRecipe.id}`)} 
               className="w-full bg-green-600 text-white"
