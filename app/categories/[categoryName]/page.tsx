@@ -6,14 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 
-// 1. UPDATED MOCK DATA (With more Main Courses)
+// 1. DATA (Includes Main Courses and others)
 const categoryData: any = {
   "appetizers": [
     { id: 1, title: "Mozzarella Sticks", time: "15 min", img: "bg-red-100", desc: "Crispy cheesy goodness." },
     { id: 2, title: "Bruschetta", time: "10 min", img: "bg-green-100", desc: "Tomato and basil on toast." },
     { id: 3, title: "Chicken Wings", time: "30 min", img: "bg-orange-100", desc: "Spicy buffalo wings." },
   ],
-  // 👇 UPDATED MAIN COURSES HERE
   "main-courses": [
     { id: 4, title: "Grilled Ribeye Steak", time: "45 min", img: "bg-red-200", desc: "Perfectly seared beef with garlic butter." },
     { id: 5, title: "Roast Chicken", time: "60 min", img: "bg-yellow-100", desc: "Herb crusted whole chicken with vegetables." },
@@ -58,17 +57,17 @@ const CategoryPage = () => {
   // Fetch recipes
   const recipes = categoryData[safeCategory] || [];
 
-  // 2. AUTH & PREMIUM LOGIC (KEPT SAME)
+  // 2. CHECK PREMIUM STATUS
   useEffect(() => {
     if (!isLoaded) return;
 
-    // A. Must be Signed In
+    // A. Force Sign In
     if (!userId) {
       router.push("/sign-in");
       return;
     }
 
-    // B. Must be Premium (Checking LocalStorage)
+    // B. Check Payment Status
     const premiumStatus = localStorage.getItem("isPremium");
     if (premiumStatus === "true") {
       setIsPremium(true);
@@ -77,14 +76,13 @@ const CategoryPage = () => {
     }
     
     setCheckingStatus(false);
-
   }, [isLoaded, userId, router]);
 
   if (!isLoaded || checkingStatus) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        <p className="mt-4 text-gray-500">Checking subscription...</p>
+        <p className="mt-4 text-gray-500">Verifying access...</p>
       </div>
     );
   }
@@ -102,8 +100,7 @@ const CategoryPage = () => {
         </div>
 
         {/* 
-            3. CONTENT AREA 
-            - If isPremium is FALSE, we add 'blur-md' and disable clicks 
+            3. CONTENT AREA (BLURRED IF NOT PREMIUM)
         */}
         <div className={`transition-all duration-300 ${!isPremium ? "blur-md pointer-events-none select-none opacity-60" : ""}`}>
            {recipes.length === 0 ? (
@@ -137,8 +134,7 @@ const CategoryPage = () => {
         </div>
 
         {/* 
-            4. PAYWALL OVERLAY 
-            - This only shows if isPremium is FALSE
+            4. THE LOCK OVERLAY (Only shows if NOT Premium)
         */}
         {!isPremium && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pt-20">
