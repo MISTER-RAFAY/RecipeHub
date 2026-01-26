@@ -123,9 +123,14 @@ const CategoryPage = () => {
                      </div>
                      <p className="text-gray-600 mb-4 text-sm">{recipe.desc}</p>
                      
-                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                       View Full Recipe
-                     </Button>
+                     {/* 
+                         UPDATED LINK: Points to the new Detail Page
+                      */}
+                     <Link href={`/categories/${safeCategory}/${recipe.id}`}>
+                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                          View Full Recipe
+                        </Button>
+                     </Link>
                    </div>
                  </div>
                ))}

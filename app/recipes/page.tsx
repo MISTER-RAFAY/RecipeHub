@@ -1,287 +1,163 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation"; // To read the URL
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/nextjs";
+import { Printer, Heart, Lock, Crown, Search, X } from "lucide-react";
 
-const RECIPES = [
-  { id: 1, title: "Classic Spaghetti Carbonara", time: "30 min", difficulty: "Medium", image: "/food/carbonara.jpg" },
-  { id: 2, title: "Avocado Toast Supreme", time: "10 min", difficulty: "Easy", image: "/food/avocado.jpg" },
-  { id: 3, title: "Homemade Margherita Pizza", time: "45 min", difficulty: "Hard", image: "/food/pizza.jpg" },
-  { id: 4, title: "Healthy Berry Smoothie", time: "5 min", difficulty: "Easy", image: "/food/smoothie.jpg" },
-  { id: 5, title: "Grilled Atlantic Salmon", time: "25 min", difficulty: "Medium", image: "/food/salmon.jpg" },
-  { id: 6, title: "Chocolate Lava Cake", time: "40 min", difficulty: "Medium", image: "/food/cake.jpg" },
-  { id: 7, title: "Fresh Garden Salad", time: "15 min", difficulty: "Easy", image: "/food/salad.jpg" },
-  { id: 8, title: "Juicy Beef Burger", time: "20 min", difficulty: "Medium", image: "/food/burger.jpg" },
-  { id: 9, title: "Japanese Ramen", time: "60 min", difficulty: "Hard", image: "/food/ramen.jpg" },
+// 1. FULL DATA LIST (Combined for search)
+const allRecipes = [
+  { id: 1, title: "Mozzarella Sticks", time: "15 min", img: "bg-red-100", desc: "Crispy cheesy goodness.", category: "appetizers" },
+  { id: 2, title: "Bruschetta", time: "10 min", img: "bg-green-100", desc: "Tomato and basil on toast.", category: "appetizers" },
+  { id: 3, title: "Chicken Wings", time: "30 min", img: "bg-orange-100", desc: "Spicy buffalo wings.", category: "appetizers" },
+  { id: 4, title: "Grilled Ribeye Steak", time: "45 min", img: "bg-red-200", desc: "Perfectly seared beef.", category: "main-courses" },
+  { id: 5, title: "Roast Chicken", time: "60 min", img: "bg-yellow-100", desc: "Herb crusted whole chicken.", category: "main-courses" },
+  { id: 6, title: "Vegetable Lasagna", time: "50 min", img: "bg-green-100", desc: "Cheesy pasta layers.", category: "main-courses" },
+  { id: 7, title: "Spaghetti Bolognese", time: "35 min", img: "bg-red-100", desc: "Classic Italian meat sauce.", category: "main-courses" },
+  { id: 102, title: "Avocado Toast Supreme", time: "10 min", img: "bg-green-100", desc: "Healthy breakfast choice.", category: "breakfast" },
+  { id: 303, title: "Grilled Atlantic Salmon", time: "25 min", img: "bg-orange-100", desc: "Rich in Omega-3.", category: "dinner" },
+  { id: 401, title: "Chocolate Lava Cake", time: "40 min", img: "bg-amber-900", desc: "Decadent dessert.", category: "desserts" },
 ];
 
-const MAX_FREE_RECIPES = 3;
-
-export default function RecipesPage() {
-  const router = useRouter();
+// Wrap component in Suspense for Next.js SearchParams support
+const RecipesContent = () => {
+  const { isLoaded, userId } = useAuth();
+  const searchParams = useSearchParams();
   
-  // STATE
-  const [isPremiumUser, setIsPremiumUser] = useState(false); // Track if user paid
-  const [viewedCount, setViewedCount] = useState(0);
-  const [daysLeft, setDaysLeft] = useState(14);
-  const [isLocked, setIsLocked] = useState(false);
-  const [savedIds, setSavedIds] = useState<number[]>([]);
+  // Get search query from URL (e.g., ?q=avocado)
+  const initialQuery = searchParams.get("q") || "";
+  
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [isPremium, setIsPremium] = useState(false);
+  const [checkedStorage, setCheckedStorage] = useState(false);
 
-  // MODALS
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showLimitModal, setShowLimitModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
-
-  // ---------------------------------------------------------
-  // 1. THE LOGIC FIX
-  // ---------------------------------------------------------
-  const checkAccessStatus = () => {
-    // A. Check Premium Status FIRST
-    const premiumStatus = localStorage.getItem("isPremium") === "true";
-    setIsPremiumUser(premiumStatus);
-
-    // B. Check Saved Recipes
-    const saved = JSON.parse(localStorage.getItem("savedRecipeIds") || "[]");
-    setSavedIds(saved);
-
-    // C. Check Trial Status
-    let startDate = localStorage.getItem("trialStartDate");
-    if (!startDate) {
-        startDate = new Date().toISOString();
-        localStorage.setItem("trialStartDate", startDate);
-    }
-    const start = new Date(startDate).getTime();
-    const now = new Date().getTime();
-    const diffDays = Math.ceil(Math.abs(now - start) / (1000 * 60 * 60 * 24));
-    const remainingDays = 14 - diffDays;
-    setDaysLeft(remainingDays > 0 ? remainingDays : 0);
-
-    const history = JSON.parse(localStorage.getItem("viewedHistoryIds") || "[]");
-    const count = history.length;
-    setViewedCount(count);
-
-    // D. DECIDE LOCK STATUS
-    // If user is Premium, isLocked is ALWAYS FALSE.
-    if (premiumStatus) {
-        setIsLocked(false);
-    } else {
-        // If not premium, check limits
-        if (diffDays > 14 || count >= MAX_FREE_RECIPES) {
-            setIsLocked(true);
-        } else {
-            setIsLocked(false);
-        }
-    }
-  };
-
+  // Update local state if URL changes
   useEffect(() => {
-    checkAccessStatus();
-    // Listen for storage events (in case they buy in another tab)
-    window.addEventListener("storage", checkAccessStatus);
-    return () => window.removeEventListener("storage", checkAccessStatus);
-  }, []);
+    setSearchTerm(initialQuery);
+  }, [initialQuery]);
 
-  // ---------------------------------------------------------
-  // HANDLERS
-  // ---------------------------------------------------------
-
-  const handleSaveClick = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Use state variable instead of hardcoded value
-    if (!isPremiumUser) {
-        setShowPremiumModal(true);
-        return;
-    }
-    let newSaved;
-    if (savedIds.includes(id)) {
-      newSaved = savedIds.filter(savedId => savedId !== id);
-    } else {
-      newSaved = [...savedIds, id];
-    }
-    setSavedIds(newSaved);
-    localStorage.setItem("savedRecipeIds", JSON.stringify(newSaved));
-    window.dispatchEvent(new Event("storage"));
-  };
-
-  const handlePrintClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!isPremiumUser) {
-          setShowPremiumModal(true);
-          return;
-      }
-      alert("Printing...");
-  }
-
-  const handleViewRecipe = (recipe: any) => {
-    // If premium, just open it
-    if (isPremiumUser) {
-        setSelectedRecipe(recipe);
-        setShowSuccessModal(true);
-        return;
-    }
-
-    // If Free User, do checks
-    const history = JSON.parse(localStorage.getItem("viewedHistoryIds") || "[]");
-    
-    if (isLocked && !history.includes(recipe.id)) {
-      setShowLimitModal(true);
+  // Auth & Premium Logic
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!userId) {
+      setIsPremium(false);
+      setCheckedStorage(true);
       return;
     }
+    const premiumStatus = localStorage.getItem("isPremium");
+    setIsPremium(premiumStatus === "true");
+    setCheckedStorage(true);
+  }, [isLoaded, userId]); 
 
-    if (!history.includes(recipe.id)) {
-        if (history.length >= MAX_FREE_RECIPES) {
-            setIsLocked(true);
-            setShowLimitModal(true);
-            return;
-        }
-        const newHistory = [...history, recipe.id];
-        localStorage.setItem("viewedHistoryIds", JSON.stringify(newHistory));
-        
-        setViewedCount(newHistory.length);
-        if (newHistory.length >= MAX_FREE_RECIPES) setIsLocked(true);
-        window.dispatchEvent(new Event("storage"));
+  // --- FILTERING LOGIC ---
+  const filteredRecipes = allRecipes.filter((recipe) => 
+    recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Render Banner Logic
+  const renderBanner = () => {
+    if (!isLoaded || !checkedStorage) return null; 
+
+    if (userId && isPremium) {
+      return (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 shadow-sm">
+          <Crown className="text-yellow-600 w-6 h-6" />
+          <div>
+            <h3 className="font-bold text-yellow-800">Premium Membership Active</h3>
+            <p className="text-sm text-yellow-700">You have unlimited access to all recipes!</p>
+          </div>
+        </div>
+      );
     }
 
-    setSelectedRecipe(recipe);
-    setShowSuccessModal(true);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
-      
-      {/* 
-         BANNER LOGIC: 
-         1. Premium = Gold Banner
-         2. Locked = Red Banner
-         3. Free Trial = Green Banner
-      */}
-      <div className={`max-w-7xl mx-auto mb-10 rounded-lg p-4 flex flex-col md:flex-row justify-between items-center shadow-sm 
-        ${isPremiumUser ? 'bg-yellow-50 border border-yellow-200' : isLocked ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-        
-        <div className="flex items-center gap-3 mb-2 md:mb-0">
-          <span className="text-2xl">{isPremiumUser ? "👑" : isLocked ? "🔒" : "🎁"}</span>
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Lock className="text-blue-600 w-6 h-6" />
           <div>
-            <h3 className={`font-bold ${isPremiumUser ? 'text-yellow-800' : isLocked ? 'text-red-800' : 'text-green-800'}`}>
-              {isPremiumUser ? "Premium Membership Active" : isLocked ? "Free Trial Ended" : "Free Trial Active"}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {isPremiumUser 
-                ? "You have unlimited access to all recipes!" 
-                : isLocked 
-                    ? "Limit Reached. Please upgrade." 
-                    : `${daysLeft} days remaining • ${Math.max(0, MAX_FREE_RECIPES - viewedCount)} free recipes left`
-              }
+            <h3 className="font-bold text-blue-900">Unlock All Features</h3>
+            <p className="text-sm text-blue-700">
+               {userId ? "Upgrade to Premium to view full ingredients." : "Sign up and subscribe to view full ingredients."}
             </p>
           </div>
         </div>
+        <Link href="/pricing">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap shadow-md">Subscribe Now</Button>
+        </Link>
+      </div>
+    );
+  };
 
-        {!isPremiumUser && (
-            <Link href="/pricing">
-            <Button className={`${isLocked ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white`}>
-                {isLocked ? "Subscribe Now" : "Upgrade to Premium"}
-            </Button>
-            </Link>
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto py-12 px-4">
+        
+        {renderBanner()}
+
+        <div className="flex flex-col md:flex-row justify-between items-center mb-10">
+          <h1 className="text-4xl font-bold text-gray-900">Explore Recipes</h1>
+          
+          {/* Internal Search Bar */}
+          <div className="relative mt-4 md:mt-0 w-full md:w-80">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+             <input 
+               type="text" 
+               placeholder="Filter recipes..." 
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="w-full pl-9 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50"
+             />
+             {searchTerm && (
+               <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                 <X className="w-4 h-4" />
+               </button>
+             )}
+          </div>
+        </div>
+
+        {filteredRecipes.length === 0 ? (
+          <div className="text-center py-20 bg-gray-50 rounded-xl">
+             <p className="text-xl text-gray-500">No recipes found for "{searchTerm}"</p>
+             <Button variant="link" onClick={() => setSearchTerm("")} className="mt-2 text-green-600">Clear Search</Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredRecipes.map((recipe) => (
+              <div key={recipe.id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden group">
+                <div className={`h-48 ${recipe.img} relative flex items-center justify-center`}>
+                  <span className="text-gray-500 font-bold bg-white/50 px-2 py-1 rounded">{recipe.title}</span>
+                  <div className="absolute top-3 right-3 flex gap-2">
+                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400"><Printer className="w-4 h-4" /></div>
+                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400"><Heart className="w-4 h-4" /></div>
+                  </div>
+                  <div className="absolute top-3 left-3 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700">{recipe.time}</div>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{recipe.title}</h3>
+                  <p className="text-gray-500 text-sm mb-4">{recipe.desc}</p>
+                  <Link href={`/categories/${recipe.category}/${recipe.id}`}>
+                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">View Recipe</Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-
-      <div className="text-center max-w-7xl mx-auto mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Explore Our Recipes</h1>
-      </div>
-
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {RECIPES.map((recipe) => (
-          <div key={recipe.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col relative group">
-            
-            <div className="absolute top-3 right-3 z-10 flex gap-2">
-                <button onClick={handlePrintClick} className="p-2 rounded-full bg-white/90 shadow-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" /></svg>
-                </button>
-                <button onClick={(e) => handleSaveClick(recipe.id, e)} className="p-2 rounded-full bg-white/90 shadow-md hover:bg-white transition">
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-colors ${savedIds.includes(recipe.id) ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                </button>
-            </div>
-
-            <div className="relative h-56 w-full bg-gray-200">
-              <img 
-                src={recipe.image} 
-                alt={recipe.title} 
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                onError={(e) => { e.currentTarget.src = "https://placehold.co/600x400?text=Delicious+Food"; }}
-              />
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm">
-                {recipe.time}
-              </div>
-            </div>
-
-            <div className="p-6 flex flex-col flex-grow">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{recipe.title}</h3>
-              <p className="text-gray-500 text-sm mb-6 flex-grow">A delicious and authentic dish.</p>
-              
-              <Button 
-                onClick={() => handleViewRecipe(recipe)}
-                className={`w-full py-6 text-lg font-medium shadow-none transition-all 
-                ${isPremiumUser 
-                    ? "bg-green-600 hover:bg-green-700 text-white" 
-                    : isLocked 
-                        ? "bg-gray-200 text-gray-500 hover:bg-gray-300" 
-                        : "bg-green-600 hover:bg-green-700 text-white"}`}
-              >
-                {/* 
-                    LOGIC: 
-                    If Premium -> "View Recipe"
-                    If Locked (and not premium) -> "Locked"
-                    If Free -> "View Recipe"
-                */}
-                {isPremiumUser ? (
-                    "View Recipe"
-                ) : isLocked ? (
-                    <span className="flex items-center gap-2">🔒 Locked</span>
-                ) : (
-                    "View Recipe"
-                )}
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* MODALS */}
-      {showSuccessModal && selectedRecipe && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Recipe Unlocked!</h2>
-            <p className="text-green-700 font-bold mb-4">{selectedRecipe.title}</p>
-            <Button onClick={() => router.push(`/recipes/${selectedRecipe.id}`)} className="w-full bg-green-600 text-white">Continue to Recipe</Button>
-          </div>
-        </div>
-      )}
-
-      {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center border-t-8 border-red-600">
-            <h2 className="text-3xl font-extrabold mb-3 text-gray-900">Limit Reached 🔒</h2>
-            <p className="text-gray-600 mb-6">You have used all 3 free recipes. Upgrade to continue.</p>
-            <Link href="/pricing"><Button className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg">Unlock Unlimited Access</Button></Link>
-            <Button onClick={() => setShowLimitModal(false)} variant="ghost" className="w-full mt-2 text-gray-400">Close</Button>
-          </div>
-        </div>
-      )}
-
-      {showPremiumModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center border-t-8 border-yellow-400">
-            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 text-3xl">💎</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Premium Feature</h2>
-            <p className="text-gray-600 mb-6">Saving and printing are exclusive to Premium Members.</p>
-            <Link href="/pricing"><Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-6 text-lg">Upgrade Now</Button></Link>
-            <Button onClick={() => setShowPremiumModal(false)} variant="ghost" className="w-full mt-2 text-gray-400">Maybe Later</Button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
-}
+};
+
+// Main Page Component wrapped in Suspense
+const RecipesPage = () => {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Loading recipes...</div>}>
+      <RecipesContent />
+    </Suspense>
+  );
+};
+
+export default RecipesPage;
