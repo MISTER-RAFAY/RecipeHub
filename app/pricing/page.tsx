@@ -1,167 +1,225 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { initializePaddle, Paddle } from "@paddle/paddle-js";
-import { useAuth } from "@clerk/nextjs";
+import { Check } from "lucide-react";
+import { useAuth, useUser, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import Script from "next/script"; 
 
-export default function PricingPage() {
+// --- SANDBOX CONFIGURATION ---
+// Ensure this is your Client Token from Developer Tools > Authentication
+const NEXT_PUBLIC_PADDLE_CLIENT_TOKEN = "test_85ba0ecc9ef60893790b460fdd8";
+
+const plans = [
+  {
+    id: "monthly",
+    paddlePriceId: "pri_01kfec2bwrj3vwzfe8q1hqbdjp", 
+    name: "Monthly",
+    price: "$49",
+    period: "Billed every month",
+    features: ["Unlimited Recipes", "Save Favorites", "Print Support"],
+    popular: false,
+  },
+  {
+    id: "six-month",
+    paddlePriceId: "pri_01kfegd2ez4j54kbw05dp33abc", 
+    name: "6 Months",
+    price: "$99",
+    period: "Save on half-year",
+    features: ["Unlimited Recipes", "Save Favorites", "Print Support"],
+    popular: true, 
+  },
+  {
+    id: "yearly",
+    paddlePriceId: "pri_01kfeg7cm6p22p39g6aasem41a", 
+    name: "Yearly",
+    price: "$199",
+    period: "Best value for money",
+    features: ["Unlimited Recipes", "Save Favorites", "Print Support"],
+    popular: false,
+  },
+  {
+    id: "lifetime",
+    paddlePriceId: "pri_01kfeg9zfeqckjyj2q7r5ktj4t", 
+    name: "Lifetime",
+    price: "$499",
+    period: "One-time payment",
+    features: ["Unlimited Recipes", "Save Favorites", "Print Support"],
+    popular: false,
+  },
+];
+
+const PricingPage = () => {
+  const { userId, isLoaded } = useAuth();
+  const { user } = useUser();
+  const { openSignIn } = useClerk();
   const router = useRouter();
-  const [paddle, setPaddle] = useState<Paddle>();
   
-  // State to track WHICH plan is active
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
-  
-  const { isLoaded, userId } = useAuth();
 
-  // Your Price IDs
-  const PRICES = {
-    monthly: "pri_01kfec2bwrj3vwzfe8q1hqbdjp",
-    sixMonth: "pri_01kfegd2ez4j54kbw05dp33abc",
-    yearly: "pri_01kfeg7cm6p22p39g6aasem41a",
-    lifetime: "pri_01kfeg9zfeqckjyj2q7r5ktj4t",
+  // Helper to handle success after payment
+  const handlePaymentSuccess = (data: any) => {
+    console.log("SANDBOX Payment Successful:", data);
+
+    // Try to find which plan was bought based on the price ID in the transaction
+    // Note: data.items contains the purchased items
+    const purchasedItem = data.items?.[0]; 
+    const matchedPlan = plans.find(p => p.paddlePriceId === purchasedItem?.price?.id);
+    const planIdToSave = matchedPlan ? matchedPlan.id : "unknown";
+
+    localStorage.setItem("isPremium", "true");
+    localStorage.setItem("activePlanId", planIdToSave);
+    setActivePlanId(planIdToSave);
+    
+    alert(`Success! Subscription active.`);
+    router.push("/recipes");
   };
 
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!userId) {
-      router.push("/sign-in");
-    } else {
-      // 1. Check LocalStorage for the SPECIFIC active plan ID
-      const storedPlanId = localStorage.getItem("activePlanId");
-      if (storedPlanId) {
-        setActivePlanId(storedPlanId);
-      }
-
-      initializePaddle({ 
-        environment: 'sandbox', 
-        token: 'test_85ba0ecc9ef60893790b460fdd8' 
-      }).then((paddleInstance) => {
-          if (paddleInstance) setPaddle(paddleInstance);
+  // 1. Initialize Paddle (Billing V2)
+  const initPaddle = () => {
+    const paddle = (window as any).Paddle;
+    if (paddle) {
+      paddle.Initialize({ 
+        token: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+        environment: 'sandbox', // <--- CRITICAL FOR TEST MODE
+        eventCallback: function(data: any) {
+           // Listen for checkout completion
+           if (data.name === "checkout.completed") {
+             handlePaymentSuccess(data.data);
+           }
+        }
       });
     }
-  }, [isLoaded, userId, router]);
+  };
 
-  const openCheckout = (priceId: string) => {
-    if (!paddle) {
-      alert("Loading payment system...");
+  // 2. Check Active Status
+  useEffect(() => {
+    // Ensure script loads if navigating back to this page
+    initPaddle(); 
+
+    if (!isLoaded) return;
+    const premiumStatus = localStorage.getItem("isPremium");
+    const savedPlanId = localStorage.getItem("activePlanId");
+
+    if (userId && premiumStatus === "true" && savedPlanId) {
+      setActivePlanId(savedPlanId);
+    } else {
+      setActivePlanId(null);
+    }
+  }, [userId, isLoaded]);
+
+  // --- HANDLE CHECKOUT ---
+  const handlePaddleCheckout = (plan: any) => {
+    if (!userId) {
+      openSignIn();
       return;
     }
 
-    const currentDomain = window.location.origin; 
+    const paddle = (window as any).Paddle;
+    if (!paddle) {
+      alert("Paddle is loading... please wait a moment.");
+      return;
+    }
 
+    // Open Paddle Checkout (V2 Syntax)
     paddle.Checkout.open({
-      items: [{ priceId: priceId, quantity: 1 }],
+      items: [{ priceId: plan.paddlePriceId, quantity: 1 }], // <--- V2 uses 'items' array
+      customer: {
+        email: user?.primaryEmailAddress?.emailAddress || "",
+      },
       settings: {
         displayMode: "overlay",
         theme: "light",
-        // 👇 UPDATED: We pass the 'plan' ID to the success URL so we can save it later
-        successUrl: `${currentDomain}/checkout/success?plan=${priceId}`, 
+        locale: "en"
       }
     });
   };
 
-  if (!isLoaded || !userId) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-600 mb-4"></div>
-        <h2 className="text-xl font-semibold text-gray-700">Verifying account...</h2>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 className="text-4xl font-extrabold text-gray-900">
-                {activePlanId ? "Your Subscription" : "Choose Your Plan"}
-            </h1>
-            <p className="text-gray-500 mt-2">
-                Unlock unlimited access to all recipes.
-            </p>
-        </div>
-        <Link href="/">
-          <Button variant="outline">Back to Home</Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      {/* 
+          IMPORTANT: Use the V2 script URL for Paddle Billing
+          Old: https://cdn.paddle.com/paddle/paddle.js (Do not use this)
+          New: https://cdn.paddle.com/paddle/v2/paddle.js (Use this)
+      */}
+      <Script 
+        src="https://cdn.paddle.com/paddle/v2/paddle.js" 
+        onLoad={initPaddle}
+      />
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <PricingCard 
-          title="Monthly" 
-          price="$49" 
-          description="Billed every month"
-          onClick={() => openCheckout(PRICES.monthly)}
-          // 👇 Check if THIS specific plan matches the stored one
-          isActive={activePlanId === PRICES.monthly}
-        />
-        <PricingCard 
-          title="6 Months" 
-          price="$99" 
-          description="Save on half-year"
-          onClick={() => openCheckout(PRICES.sixMonth)}
-          highlight
-          isActive={activePlanId === PRICES.sixMonth}
-        />
-        <PricingCard 
-          title="Yearly" 
-          price="$199" 
-          description="Best value for money"
-          onClick={() => openCheckout(PRICES.yearly)}
-          isActive={activePlanId === PRICES.yearly}
-        />
-        <PricingCard 
-          title="Lifetime" 
-          price="$499" 
-          description="One-time payment"
-          onClick={() => openCheckout(PRICES.lifetime)}
-          isActive={activePlanId === PRICES.lifetime}
-        />
+      <div className="container mx-auto max-w-6xl">
+        
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">Your Subscription</h1>
+            <p className="text-gray-500 mt-2">
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded border border-yellow-200 uppercase mr-2">
+                Test Mode
+              </span>
+              Unlock unlimited access to all recipes.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/")}>Back to Home</Button>
+        </div>
+
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {plans.map((plan) => {
+            const isActive = activePlanId === plan.id;
+
+            return (
+              <div 
+                key={plan.id} 
+                className={`relative bg-white rounded-2xl shadow-sm border transition-all duration-300 flex flex-col
+                  ${plan.popular ? "border-green-500 shadow-md transform scale-105 md:scale-100 lg:scale-105 z-10" : "border-gray-200 hover:shadow-lg"}
+                `}
+              >
+                {plan.popular && (
+                  <div className="bg-green-500 text-white text-center text-xs font-bold py-2 rounded-t-2xl uppercase tracking-wider">
+                    Most Popular
+                  </div>
+                )}
+
+                <div className="p-8 flex-grow flex flex-col items-center text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <div className="text-4xl font-extrabold text-gray-900 mb-1">{plan.price}</div>
+                  <p className="text-sm text-gray-500 mb-6">{plan.period}</p>
+
+                  <ul className="space-y-3 mb-8 text-left w-full pl-4">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center text-sm text-gray-600">
+                        <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-auto w-full">
+                    {isActive ? (
+                      <Button 
+                        disabled 
+                        className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-50 font-bold cursor-default"
+                      >
+                        ✅ Active Plan
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => handlePaddleCheckout(plan)}
+                        className={`w-full font-bold ${plan.popular ? "bg-green-600 hover:bg-green-700" : "bg-green-800 hover:bg-green-900"}`}
+                      >
+                        Subscribe
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
-  ); 
-}
+  );
+};
 
-function PricingCard({ title, price, description, onClick, highlight = false, isActive = false }: any) {
-    return (
-        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 flex flex-col ${highlight ? 'border-green-500 ring-2 ring-green-500 ring-offset-2' : 'border-gray-200'} ${isActive ? 'ring-2 ring-green-600 shadow-xl' : 'hover:scale-105'}`}>
-            {highlight && <div className="bg-green-500 text-white text-center text-xs font-bold py-1 uppercase tracking-wide">Most Popular</div>}
-            <div className="p-8 flex-grow flex flex-col items-center text-center">
-                <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-                <div className="mt-4 mb-2">
-                    <span className="text-4xl font-extrabold text-gray-900">{price}</span>
-                </div>
-                <p className="text-gray-500 text-sm mb-6">{description}</p>
-                <ul className="text-left text-sm text-gray-600 space-y-3 mb-8 w-full px-4">
-                    <li className="flex items-center">✅ Unlimited Recipes</li>
-                    <li className="flex items-center">✅ Save Favorites</li>
-                    <li className="flex items-center">✅ Print Support</li>
-                </ul>
-                
-                {/* 
-                   LOGIC UPDATE: 
-                   Only disable and show "Active" if this specific card is the active one.
-                   Otherwise, show "Subscribe" (allowing them to switch plans).
-                */}
-                {isActive ? (
-                    <Button 
-                        disabled 
-                        className="w-full font-bold py-6 bg-gray-100 text-green-700 border border-green-200 cursor-default"
-                    >
-                        ✅ Active Plan
-                    </Button>
-                ) : (
-                    <Button 
-                        onClick={onClick} 
-                        className={`w-full font-bold py-6 ${highlight ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                    >
-                        Subscribe
-                    </Button>
-                )}
-            </div>
-        </div>
-    )
-}
+export default PricingPage;
