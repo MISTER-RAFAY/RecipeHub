@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs'; // 👈 IMPORT THIS
 import "./globals.css";
 import { Navigation } from "@/components/navigation"; 
+import Footer from "@/components/Footer"; // 👈 ADDED IMPORT
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <body className={inter.className}>
           <Navigation />
           <main>{children}</main>
+          <Footer /> {/* 👈 ADDED FOOTER HERE */}
         </body>
       </html>
     </ClerkProvider>
