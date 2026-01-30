@@ -2,43 +2,44 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image"; // 👈 IMPORT ADDED
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 
-// 1. DATA (Includes Main Courses and others)
+// 1. DATA (Updated with Manual Image Paths)
 const categoryData: any = {
   "appetizers": [
-    { id: 1, title: "Mozzarella Sticks", time: "15 min", img: "bg-red-100", desc: "Crispy cheesy goodness." },
-    { id: 2, title: "Bruschetta", time: "10 min", img: "bg-green-100", desc: "Tomato and basil on toast." },
-    { id: 3, title: "Chicken Wings", time: "30 min", img: "bg-orange-100", desc: "Spicy buffalo wings." },
+    { id: 1, title: "Mozzarella Sticks", time: "15 min", imageSrc: "/mozzarella.jpg", desc: "Crispy cheesy goodness." },
+    { id: 2, title: "Bruschetta", time: "10 min", imageSrc: "/food/bruschetta.jpg", desc: "Tomato and basil on toast." },
+    { id: 3, title: "Chicken Wings", time: "30 min", imageSrc: "/food/wings.jpg", desc: "Spicy buffalo wings." },
   ],
   "main-courses": [
-    { id: 4, title: "Grilled Ribeye Steak", time: "45 min", img: "bg-red-200", desc: "Perfectly seared beef with garlic butter." },
-    { id: 5, title: "Roast Chicken", time: "60 min", img: "bg-yellow-100", desc: "Herb crusted whole chicken with vegetables." },
-    { id: 6, title: "Vegetable Lasagna", time: "50 min", img: "bg-green-100", desc: "Cheesy pasta layers with spinach and marinara." },
-    { id: 7, title: "Spaghetti Bolognese", time: "35 min", img: "bg-red-100", desc: "Classic Italian meat sauce over fresh pasta." },
-    { id: 8, title: "Beef Tacos", time: "25 min", img: "bg-orange-50", desc: "Seasoned ground beef with fresh salsa." },
+    { id: 4, title: "Grilled Ribeye Steak", time: "45 min", imageSrc: "/food/steak.jpg", desc: "Perfectly seared beef with garlic butter." },
+    { id: 5, title: "Roast Chicken", time: "60 min", imageSrc: "/food/chicken.jpg", desc: "Herb crusted whole chicken with vegetables." },
+    { id: 6, title: "Vegetable Lasagna", time: "50 min", imageSrc: "/food/lasagna.jpg", desc: "Cheesy pasta layers with spinach and marinara." },
+    { id: 7, title: "Spaghetti Bolognese", time: "35 min", imageSrc: "/food/spaghetti.jpg", desc: "Classic Italian meat sauce over fresh pasta." },
+    { id: 8, title: "Beef Tacos", time: "25 min", imageSrc: "/food/tacos.jpg", desc: "Seasoned ground beef with fresh salsa." },
   ],
   "breakfast": [
-    { id: 101, title: "Fluffy Pancakes", time: "20 min", img: "bg-orange-100", desc: "Classic buttermilk pancakes." },
-    { id: 102, title: "Avocado Toast", time: "10 min", img: "bg-green-100", desc: "Healthy start to the day." },
-    { id: 103, title: "Omelette Supreme", time: "15 min", img: "bg-yellow-100", desc: "Cheese and veggie packed." },
+    { id: 101, title: "Fluffy Pancakes", time: "20 min", imageSrc: "/food/pancakes.jpg", desc: "Classic buttermilk pancakes." },
+    { id: 102, title: "Avocado Toast", time: "10 min", imageSrc: "/food/avocado.jpg", desc: "Healthy start to the day." },
+    { id: 103, title: "Omelette Supreme", time: "15 min", imageSrc: "/food/omelette.jpg", desc: "Cheese and veggie packed." },
   ],
   "lunch": [
-    { id: 201, title: "Chicken Caesar Salad", time: "25 min", img: "bg-green-100", desc: "Fresh and crunchy." },
-    { id: 202, title: "Grilled Cheese", time: "15 min", img: "bg-orange-100", desc: "Melty perfection." },
-    { id: 203, title: "Tomato Soup", time: "20 min", img: "bg-red-100", desc: "Creamy and rich." },
+    { id: 201, title: "Chicken Caesar Salad", time: "25 min", imageSrc: "/food/salad.jpg", desc: "Fresh and crunchy." },
+    { id: 202, title: "Grilled Cheese", time: "15 min", imageSrc: "/food/cheese.jpg", desc: "Melty perfection." },
+    { id: 203, title: "Tomato Soup", time: "20 min", imageSrc: "/food/soup.jpg", desc: "Creamy and rich." },
   ],
   "dinner": [
-    { id: 301, title: "Steak & Potatoes", time: "45 min", img: "bg-red-100", desc: "Hearty meal." },
-    { id: 302, title: "Pasta Alfredo", time: "30 min", img: "bg-yellow-100", desc: "Creamy white sauce." },
-    { id: 303, title: "Salmon Fillet", time: "25 min", img: "bg-orange-100", desc: "Pan seared with lemon." },
+    { id: 301, title: "Steak & Potatoes", time: "45 min", imageSrc: "/food/steak-dinner.jpg", desc: "Hearty meal." },
+    { id: 302, title: "Pasta Alfredo", time: "30 min", imageSrc: "/food/alfredo.jpg", desc: "Creamy white sauce." },
+    { id: 303, title: "Salmon Fillet", time: "25 min", imageSrc: "/food/salmon.jpg", desc: "Pan seared with lemon." },
   ],
   "desserts": [
-    { id: 401, title: "Chocolate Lava Cake", time: "60 min", img: "bg-amber-900", desc: "Rich and moist." },
-    { id: 402, title: "Cheesecake", time: "4 hours", img: "bg-yellow-50", desc: "New York style." },
-    { id: 403, title: "Ice Cream Sundae", time: "5 min", img: "bg-pink-100", desc: "Vanilla with sprinkles." },
+    { id: 401, title: "Chocolate Lava Cake", time: "60 min", imageSrc: "/food/lava-cake.jpg", desc: "Rich and moist." },
+    { id: 402, title: "Cheesecake", time: "4 hours", imageSrc: "/food/cheesecake.jpg", desc: "New York style." },
+    { id: 403, title: "Ice Cream Sundae", time: "5 min", imageSrc: "/food/icecream.jpg", desc: "Vanilla with sprinkles." },
   ]
 };
 
@@ -110,10 +111,16 @@ const CategoryPage = () => {
            ) : (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                {recipes.map((recipe: any) => (
-                 <div key={recipe.id} className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-xl transition">
-                   {/* Placeholder Image */}
-                   <div className={`h-48 w-full ${recipe.img} flex items-center justify-center text-gray-500 font-bold`}>
-                     {recipe.title}
+                 <div key={recipe.id} className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-xl transition group">
+                   
+                   {/* 👇 UPDATED: Image Component instead of Div */}
+                   <div className="relative h-48 w-full bg-gray-200">
+                     <Image 
+                        src={recipe.imageSrc} 
+                        alt={recipe.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                     />
                    </div>
                    
                    <div className="p-6">
@@ -123,9 +130,6 @@ const CategoryPage = () => {
                      </div>
                      <p className="text-gray-600 mb-4 text-sm">{recipe.desc}</p>
                      
-                     {/* 
-                         UPDATED LINK: Points to the new Detail Page
-                      */}
                      <Link href={`/categories/${safeCategory}/${recipe.id}`}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
                           View Full Recipe

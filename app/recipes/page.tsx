@@ -2,43 +2,110 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation"; // To read the URL
+import Image from "next/image"; 
+import { useSearchParams } from "next/navigation"; 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { Printer, Heart, Lock, Crown, Search, X } from "lucide-react";
 
-// 1. FULL DATA LIST (Combined for search)
 const allRecipes = [
-  { id: 1, title: "Mozzarella Sticks", time: "15 min", img: "bg-red-100", desc: "Crispy cheesy goodness.", category: "appetizers" },
-  { id: 2, title: "Bruschetta", time: "10 min", img: "bg-green-100", desc: "Tomato and basil on toast.", category: "appetizers" },
-  { id: 3, title: "Chicken Wings", time: "30 min", img: "bg-orange-100", desc: "Spicy buffalo wings.", category: "appetizers" },
-  { id: 4, title: "Grilled Ribeye Steak", time: "45 min", img: "bg-red-200", desc: "Perfectly seared beef.", category: "main-courses" },
-  { id: 5, title: "Roast Chicken", time: "60 min", img: "bg-yellow-100", desc: "Herb crusted whole chicken.", category: "main-courses" },
-  { id: 6, title: "Vegetable Lasagna", time: "50 min", img: "bg-green-100", desc: "Cheesy pasta layers.", category: "main-courses" },
-  { id: 7, title: "Spaghetti Bolognese", time: "35 min", img: "bg-red-100", desc: "Classic Italian meat sauce.", category: "main-courses" },
-  { id: 102, title: "Avocado Toast Supreme", time: "10 min", img: "bg-green-100", desc: "Healthy breakfast choice.", category: "breakfast" },
-  { id: 303, title: "Grilled Atlantic Salmon", time: "25 min", img: "bg-orange-100", desc: "Rich in Omega-3.", category: "dinner" },
-  { id: 401, title: "Chocolate Lava Cake", time: "40 min", img: "bg-amber-900", desc: "Decadent dessert.", category: "desserts" },
+  { 
+    id: 1, 
+    title: "Mozzarella Sticks", 
+    time: "15 min", 
+    // 👇 FIX 1: Changed 'ImageSrc' to 'imageSrc' (lowercase i)
+    imageSrc: "/mozrella.jpg",
+    desc: "Crispy cheesy goodness.", 
+    category: "appetizers" 
+  },
+  { 
+    id: 2, 
+    title: "Bruschetta", 
+    time: "10 min", 
+    imageSrc: "/Burchestta.png", 
+    desc: "Tomato and basil on toast.", 
+    category: "appetizers" 
+  },
+  { 
+    id: 3, 
+    title: "Chicken Wings", 
+    time: "30 min", 
+    imageSrc: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?q=80&w=600&auto=format&fit=crop", 
+    desc: "Spicy buffalo wings.", 
+    category: "appetizers" 
+  },
+  { 
+    id: 4, 
+    title: "Grilled Ribeye Steak", 
+    time: "45 min", 
+    imageSrc: "https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=600&auto=format&fit=crop", 
+    desc: "Perfectly seared beef.", 
+    category: "main-courses" 
+  },
+  { 
+    id: 5, 
+    title: "Roast Chicken", 
+    time: "60 min", 
+    imageSrc: "/Roastchicken.jpg", 
+    desc: "Herb crusted whole chicken.", 
+    category: "main-courses" 
+  },
+  { 
+    id: 6, 
+    title: "Vegetable Lasagna", 
+    time: "50 min", 
+    imageSrc: "https://images.unsplash.com/photo-1619895092538-128341789043?q=80&w=600&auto=format&fit=crop", 
+    desc: "Cheesy pasta layers.", 
+    category: "main-courses" 
+  },
+  { 
+    id: 7, 
+    title: "Spaghetti Bolognese", 
+    time: "35 min", 
+    imageSrc: "https://images.unsplash.com/photo-1622973536968-3ead9e780960?q=80&w=600&auto=format&fit=crop", 
+    desc: "Classic Italian meat sauce.", 
+    category: "main-courses" 
+  },
+  { 
+    id: 102, 
+    title: "Avocado Toast", 
+    time: "10 min", 
+    imageSrc: "/Avocado.jpg", 
+    desc: "Healthy breakfast choice.", 
+    category: "breakfast" 
+  },
+  { 
+    id: 303, 
+    title: "Grilled Salmon", 
+    time: "25 min", 
+    imageSrc: "https://images.unsplash.com/photo-1485921325833-c519f76c4927?q=80&w=600&auto=format&fit=crop", 
+    desc: "Rich in Omega-3.", 
+    category: "dinner" 
+  },
+  { 
+    id: 401, 
+    title: "Lava Cake", 
+    time: "40 min", 
+    imageSrc: "/Lava.jpg", 
+    desc: "Decadent dessert.", 
+    category: "desserts" 
+  },
 ];
 
-// Wrap component in Suspense for Next.js SearchParams support
 const RecipesContent = () => {
   const { isLoaded, userId } = useAuth();
   const searchParams = useSearchParams();
   
-  // Get search query from URL (e.g., ?q=avocado)
   const initialQuery = searchParams.get("q") || "";
   
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [isPremium, setIsPremium] = useState(false);
   const [checkedStorage, setCheckedStorage] = useState(false);
 
-  // Update local state if URL changes
   useEffect(() => {
     setSearchTerm(initialQuery);
   }, [initialQuery]);
 
-  // Auth & Premium Logic
   useEffect(() => {
     if (!isLoaded) return;
     if (!userId) {
@@ -51,12 +118,10 @@ const RecipesContent = () => {
     setCheckedStorage(true);
   }, [isLoaded, userId]); 
 
-  // --- FILTERING LOGIC ---
   const filteredRecipes = allRecipes.filter((recipe) => 
     recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Render Banner Logic
   const renderBanner = () => {
     if (!isLoaded || !checkedStorage) return null; 
 
@@ -99,7 +164,6 @@ const RecipesContent = () => {
         <div className="flex flex-col md:flex-row justify-between items-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900">Explore Recipes</h1>
           
-          {/* Internal Search Bar */}
           <div className="relative mt-4 md:mt-0 w-full md:w-80">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
              <input 
@@ -126,13 +190,27 @@ const RecipesContent = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredRecipes.map((recipe) => (
               <div key={recipe.id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden group">
-                <div className={`h-48 ${recipe.img} relative flex items-center justify-center`}>
-                  <span className="text-gray-500 font-bold bg-white/50 px-2 py-1 rounded">{recipe.title}</span>
-                  <div className="absolute top-3 right-3 flex gap-2">
-                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400"><Printer className="w-4 h-4" /></div>
-                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400"><Heart className="w-4 h-4" /></div>
+                
+                <div className="relative h-48 w-full bg-gray-100">
+                  {/* 👇 FIX 2: Changed 'Src' to 'src' (lowercase s) */}
+                  <Image 
+                    src={recipe.imageSrc} 
+                    alt={recipe.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  
+                  <div className="absolute top-3 right-3 flex gap-2 z-10">
+                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400 hover:text-green-600 cursor-pointer transition">
+                        <Printer className="w-4 h-4" />
+                     </div>
+                     <div className="bg-white p-2 rounded-full shadow-sm text-gray-400 hover:text-red-500 cursor-pointer transition">
+                        <Heart className="w-4 h-4" />
+                     </div>
                   </div>
-                  <div className="absolute top-3 left-3 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700">{recipe.time}</div>
+                  <div className="absolute top-3 left-3 bg-white/90 px-2 py-1 rounded text-xs font-bold text-gray-700 z-10 shadow-sm">
+                    {recipe.time}
+                  </div>
                 </div>
 
                 <div className="p-6">
@@ -151,7 +229,6 @@ const RecipesContent = () => {
   );
 };
 
-// Main Page Component wrapped in Suspense
 const RecipesPage = () => {
   return (
     <Suspense fallback={<div className="p-10 text-center">Loading recipes...</div>}>

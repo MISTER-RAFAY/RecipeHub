@@ -13,7 +13,7 @@ const RECIPES = [
     title: "Classic Spaghetti Carbonara", 
     time: "30 min", 
     difficulty: "Medium", 
-    image: "/food/carbonara.jpg", 
+    image: "/product/mozrella.jpg", 
     description: "A Roman classic! Creamy, peppery, and rich without using any actual cream. The sauce is made from fresh eggs, hard cheese, cured pork, and black pepper.",
     ingredients: ["400g Spaghetti", "200g Guanciale or Pancetta", "4 large fresh Eggs", "100g Pecorino Romano", "Black Pepper"],
     instructions: ["Boil pasta.", "Fry guanciale.", "Whisk eggs and cheese.", "Combine hot pasta with egg mixture away from heat."]
