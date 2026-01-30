@@ -9,12 +9,12 @@ import Script from "next/script";
 
 // --- SANDBOX CONFIGURATION ---
 // Ensure this is your Client Token from Developer Tools > Authentication
-const NEXT_PUBLIC_PADDLE_CLIENT_TOKEN = "test_85ba0ecc9ef60893790b460fdd8";
+const NEXT_PUBLIC_PADDLE_CLIENT_TOKEN = "live_c0406dbc510405cb550a9a385c1";
 
 const plans = [
   {
     id: "monthly",
-    paddlePriceId: "pri_01kfec2bwrj3vwzfe8q1hqbdjp", 
+    paddlePriceId: "pri_01kg6q96e803hyccnyygesqxvc", 
     name: "Monthly",
     price: "$49",
     period: "Billed every month",
@@ -23,7 +23,7 @@ const plans = [
   },
   {
     id: "six-month",
-    paddlePriceId: "pri_01kfegd2ez4j54kbw05dp33abc", 
+    paddlePriceId: "pri_01kg6qbda0s20xvsg06sqkwz8x", 
     name: "6 Months",
     price: "$99",
     period: "Save on half-year",
@@ -32,7 +32,7 @@ const plans = [
   },
   {
     id: "yearly",
-    paddlePriceId: "pri_01kfeg7cm6p22p39g6aasem41a", 
+    paddlePriceId: "pri_01kg6qcykr1tgxfhqk2s3jfjbj", 
     name: "Yearly",
     price: "$199",
     period: "Best value for money",
@@ -41,7 +41,7 @@ const plans = [
   },
   {
     id: "lifetime",
-    paddlePriceId: "pri_01kfeg9zfeqckjyj2q7r5ktj4t", 
+    paddlePriceId: "pri_01kg6qefnc1ajchk7jt155fcet", 
     name: "Lifetime",
     price: "$499",
     period: "One-time payment",
@@ -82,7 +82,7 @@ const PricingPage = () => {
     if (paddle) {
       paddle.Initialize({ 
         token: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-        environment: 'sandbox', // <--- CRITICAL FOR TEST MODE
+        environment: 'production', // <--- CRITICAL FOR TEST MODE
         eventCallback: function(data: any) {
            // Listen for checkout completion
            if (data.name === "checkout.completed") {
