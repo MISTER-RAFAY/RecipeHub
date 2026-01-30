@@ -7,8 +7,7 @@ import { useAuth, useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Script from "next/script"; 
 
-// --- SANDBOX CONFIGURATION ---
-// Ensure this is your Client Token from Developer Tools > Authentication
+// --- LIVE CONFIGURATION ---
 const NEXT_PUBLIC_PADDLE_CLIENT_TOKEN = "live_c0406dbc510405cb550a9a385c1";
 
 const plans = [
@@ -60,10 +59,9 @@ const PricingPage = () => {
 
   // Helper to handle success after payment
   const handlePaymentSuccess = (data: any) => {
-    console.log("SANDBOX Payment Successful:", data);
+    console.log("Payment Successful:", data);
 
     // Try to find which plan was bought based on the price ID in the transaction
-    // Note: data.items contains the purchased items
     const purchasedItem = data.items?.[0]; 
     const matchedPlan = plans.find(p => p.paddlePriceId === purchasedItem?.price?.id);
     const planIdToSave = matchedPlan ? matchedPlan.id : "unknown";
@@ -80,22 +78,23 @@ const PricingPage = () => {
   const initPaddle = () => {
     const paddle = (window as any).Paddle;
     if (paddle) {
-      paddle.Initialize({ 
-        token: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-        environment: 'production', // <--- CRITICAL FOR TEST MODE
-        eventCallback: function(data: any) {
-           // Listen for checkout completion
-           if (data.name === "checkout.completed") {
-             handlePaymentSuccess(data.data);
-           }
-        }
-      });
+      // Prevent re-initialization error
+      if (!paddle.Initialized) {
+        paddle.Initialize({ 
+          token: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+          environment: 'production', 
+          eventCallback: function(data: any) {
+             if (data.name === "checkout.completed") {
+               handlePaymentSuccess(data.data);
+             }
+          }
+        });
+      }
     }
   };
 
   // 2. Check Active Status
   useEffect(() => {
-    // Ensure script loads if navigating back to this page
     initPaddle(); 
 
     if (!isLoaded) return;
@@ -124,7 +123,7 @@ const PricingPage = () => {
 
     // Open Paddle Checkout (V2 Syntax)
     paddle.Checkout.open({
-      items: [{ priceId: plan.paddlePriceId, quantity: 1 }], // <--- V2 uses 'items' array
+      items: [{ priceId: plan.paddlePriceId, quantity: 1 }], 
       customer: {
         email: user?.primaryEmailAddress?.emailAddress || "",
       },
@@ -138,11 +137,7 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
-      {/* 
-          IMPORTANT: Use the V2 script URL for Paddle Billing
-          Old: https://cdn.paddle.com/paddle/paddle.js (Do not use this)
-          New: https://cdn.paddle.com/paddle/v2/paddle.js (Use this)
-      */}
+      {/* Load V2 Script */}
       <Script 
         src="https://cdn.paddle.com/paddle/v2/paddle.js" 
         onLoad={initPaddle}
@@ -153,10 +148,8 @@ const PricingPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">Your Subscription</h1>
+            {/* REMOVED THE TEST MODE BADGE HERE */}
             <p className="text-gray-500 mt-2">
-              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded border border-yellow-200 uppercase mr-2">
-                Test Mode
-              </span>
               Unlock unlimited access to all recipes.
             </p>
           </div>
