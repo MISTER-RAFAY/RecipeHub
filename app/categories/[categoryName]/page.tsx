@@ -11,15 +11,15 @@ import { useAuth } from "@clerk/nextjs";
 const categoryData: any = {
   "appetizers": [
     { id: 1, title: "Mozzarella Sticks", time: "15 min", imageSrc: "/mozrella.jpg", desc: "Crispy cheesy goodness." },
-    { id: 2, title: "Bruschetta", time: "10 min", imageSrc: "/Burchestta.jpg", desc: "Tomato and basil on toast." },
+    { id: 2, title: "Bruschetta", time: "10 min", imageSrc: "/Burchestta.png", desc: "Tomato and basil on toast." },
     { id: 3, title: "Chicken Wings", time: "30 min", imageSrc: "/categoriesname/wings.jpg", desc: "Spicy buffalo wings." },
   ],
   "main-courses": [
-    { id: 4, title: "Grilled Ribeye Steak", time: "45 min", imageSrc: "/food/steak.jpg", desc: "Perfectly seared beef with garlic butter." },
-    { id: 5, title: "Roast Chicken", time: "60 min", imageSrc: "/food/chicken.jpg", desc: "Herb crusted whole chicken with vegetables." },
-    { id: 6, title: "Vegetable Lasagna", time: "50 min", imageSrc: "/food/lasagna.jpg", desc: "Cheesy pasta layers with spinach and marinara." },
-    { id: 7, title: "Spaghetti Bolognese", time: "35 min", imageSrc: "/food/spaghetti.jpg", desc: "Classic Italian meat sauce over fresh pasta." },
-    { id: 8, title: "Beef Tacos", time: "25 min", imageSrc: "/food/tacos.jpg", desc: "Seasoned ground beef with fresh salsa." },
+    { id: 4, title: "Grilled Ribeye Steak", time: "45 min", imageSrc: "/categoriesname/steak.jpg", desc: "Perfectly seared beef with garlic butter." },
+    { id: 5, title: "Roast Chicken", time: "60 min", imageSrc: "/Roastchicken.jpg", desc: "Herb crusted whole chicken with vegetables." },
+    { id: 6, title: "Vegetable Lasagna", time: "50 min", imageSrc: "/categoriesname/lasangna.jpg", desc: "Cheesy pasta layers with spinach and marinara." },
+    { id: 7, title: "Spaghetti Bolognese", time: "35 min", imageSrc: "/categoriesname/spaghetti.jpg", desc: "Classic Italian meat sauce over fresh pasta." },
+    { id: 8, title: "Beef Tacos", time: "25 min", imageSrc: "/categoriesname/tacos.jpg", desc: "Seasoned ground beef with fresh salsa." },
   ],
   "breakfast": [
     { id: 101, title: "Fluffy Pancakes", time: "20 min", imageSrc: "/food/pancakes.jpg", desc: "Classic buttermilk pancakes." },
