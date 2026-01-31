@@ -28,8 +28,8 @@ const categoryData: any = {
   ],
   "lunch": [
     { id: 201, title: "Chicken Caesar Salad", time: "25 min", imageSrc: "/categoriesname/salad.jpg", desc: "Fresh and crunchy." },
-    { id: 202, title: "Grilled Cheese", time: "15 min", imageSrc: "/food/cheese.jpg", desc: "Melty perfection." },
-    { id: 203, title: "Tomato Soup", time: "20 min", imageSrc: "/food/soup.jpg", desc: "Creamy and rich." },
+    { id: 202, title: "Grilled Cheese", time: "15 min", imageSrc: "/categoriesname/cheese.jpg", desc: "Melty perfection." },
+    { id: 203, title: "Tomato Soup", time: "20 min", imageSrc: "/categoriesname/soup.jpg", desc: "Creamy and rich." },
   ],
   "dinner": [
     { id: 301, title: "Steak & Potatoes", time: "45 min", imageSrc: "/categoriesname/steak-dinner.jpg", desc: "Hearty meal." },
