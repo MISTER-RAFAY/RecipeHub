@@ -6,7 +6,7 @@ import Link from "next/link";
 const CategoriesPage = () => {
   // 1. Updated with manual image paths
   const categories = [
-    { name: "Appetizers", count: 4, image: "/categories/appetizer.jpg", desc: "Start your meal with delicious small bites" },
+    { name: "Appetizers", count: 4, image: "/categories/Appetizer.jpg", desc: "Start your meal with delicious small bites" },
     { name: "Main Courses", count: 4, image: "/categories/Maincourse.jpg", desc: "Hearty and satisfying dishes for your main meal" },
     { name: "Desserts", count: 4, image: "/categories/desserts.jpg", desc: "Sweet treats to end your meal perfectly" },
     { name: "Breakfast", count: 4, image: "/categories/breakfast.jpg", desc: "Start your day right" },

@@ -10,9 +10,9 @@ import { useAuth } from "@clerk/nextjs";
 // 1. DATA (Updated with Manual Image Paths)
 const categoryData: any = {
   "appetizers": [
-    { id: 1, title: "Mozzarella Sticks", time: "15 min", imageSrc: "/mozzarella.jpg", desc: "Crispy cheesy goodness." },
-    { id: 2, title: "Bruschetta", time: "10 min", imageSrc: "/food/bruschetta.jpg", desc: "Tomato and basil on toast." },
-    { id: 3, title: "Chicken Wings", time: "30 min", imageSrc: "/food/wings.jpg", desc: "Spicy buffalo wings." },
+    { id: 1, title: "Mozzarella Sticks", time: "15 min", imageSrc: "/mozrella.jpg", desc: "Crispy cheesy goodness." },
+    { id: 2, title: "Bruschetta", time: "10 min", imageSrc: "/Burchestta.jpg", desc: "Tomato and basil on toast." },
+    { id: 3, title: "Chicken Wings", time: "30 min", imageSrc: "/categoriesname/wings.jpg", desc: "Spicy buffalo wings." },
   ],
   "main-courses": [
     { id: 4, title: "Grilled Ribeye Steak", time: "45 min", imageSrc: "/food/steak.jpg", desc: "Perfectly seared beef with garlic butter." },
