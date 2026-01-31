@@ -22,24 +22,24 @@ const categoryData: any = {
     { id: 8, title: "Beef Tacos", time: "25 min", imageSrc: "/categoriesname/tacos.jpg", desc: "Seasoned ground beef with fresh salsa." },
   ],
   "breakfast": [
-    { id: 101, title: "Fluffy Pancakes", time: "20 min", imageSrc: "/food/pancakes.jpg", desc: "Classic buttermilk pancakes." },
-    { id: 102, title: "Avocado Toast", time: "10 min", imageSrc: "/food/avocado.jpg", desc: "Healthy start to the day." },
-    { id: 103, title: "Omelette Supreme", time: "15 min", imageSrc: "/food/omelette.jpg", desc: "Cheese and veggie packed." },
+    { id: 101, title: "Fluffy Pancakes", time: "20 min", imageSrc: "/categoriesname/pancakes.jpg", desc: "Classic buttermilk pancakes." },
+    { id: 102, title: "Avocado Toast", time: "10 min", imageSrc: "/Avocado.jpg", desc: "Healthy start to the day." },
+    { id: 103, title: "Omelette Supreme", time: "15 min", imageSrc: "/categoriesname/omelette.jpg", desc: "Cheese and veggie packed." },
   ],
   "lunch": [
-    { id: 201, title: "Chicken Caesar Salad", time: "25 min", imageSrc: "/food/salad.jpg", desc: "Fresh and crunchy." },
+    { id: 201, title: "Chicken Caesar Salad", time: "25 min", imageSrc: "/categoriesname/salad.jpg", desc: "Fresh and crunchy." },
     { id: 202, title: "Grilled Cheese", time: "15 min", imageSrc: "/food/cheese.jpg", desc: "Melty perfection." },
     { id: 203, title: "Tomato Soup", time: "20 min", imageSrc: "/food/soup.jpg", desc: "Creamy and rich." },
   ],
   "dinner": [
-    { id: 301, title: "Steak & Potatoes", time: "45 min", imageSrc: "/food/steak-dinner.jpg", desc: "Hearty meal." },
-    { id: 302, title: "Pasta Alfredo", time: "30 min", imageSrc: "/food/alfredo.jpg", desc: "Creamy white sauce." },
-    { id: 303, title: "Salmon Fillet", time: "25 min", imageSrc: "/food/salmon.jpg", desc: "Pan seared with lemon." },
+    { id: 301, title: "Steak & Potatoes", time: "45 min", imageSrc: "/categoriesname/steak-dinner.jpg", desc: "Hearty meal." },
+    { id: 302, title: "Pasta Alfredo", time: "30 min", imageSrc: "/categoriesname/alfredo.jpg", desc: "Creamy white sauce." },
+    { id: 303, title: "Salmon Fillet", time: "25 min", imageSrc: "/categoriesname/salmon.jpg", desc: "Pan seared with lemon." },
   ],
   "desserts": [
-    { id: 401, title: "Chocolate Lava Cake", time: "60 min", imageSrc: "/food/lava-cake.jpg", desc: "Rich and moist." },
-    { id: 402, title: "Cheesecake", time: "4 hours", imageSrc: "/food/cheesecake.jpg", desc: "New York style." },
-    { id: 403, title: "Ice Cream Sundae", time: "5 min", imageSrc: "/food/icecream.jpg", desc: "Vanilla with sprinkles." },
+    { id: 401, title: "Chocolate Lava Cake", time: "60 min", imageSrc:"/Lava.jpg", desc: "Rich and moist." },
+    { id: 402, title: "Cheesecake", time: "4 hours", imageSrc: "/categoriesname/cheesecake.jpg", desc: "New York style." },
+    { id: 403, title: "Ice Cream Sundae", time: "5 min", imageSrc: "/categoriesname/icecream.jpg", desc: "Vanilla with sprinkles." },
   ]
 };
 
