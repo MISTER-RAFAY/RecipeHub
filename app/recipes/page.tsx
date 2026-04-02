@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import RecipesPage from "./recipesclient";
+import RecipesPage, { allRecipes } from "./recipesclient";
 
 export const metadata: Metadata = {
   title: "All Recipes – Easy Meals from Around the World",
@@ -26,4 +26,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default RecipesPage;
+export default function Page() {
+  return <RecipesPage recipes={allRecipes} />;
+}
