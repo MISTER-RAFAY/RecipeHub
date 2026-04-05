@@ -55,6 +55,7 @@ export default function RootLayout({
           <Navigation />
           <main>{children}</main>
           <Footer />
+          <ChatBot />
         </body>
       </html>
     </ClerkProvider>

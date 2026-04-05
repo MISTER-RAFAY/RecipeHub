@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, MessageCircle, Image, Mic, MicOff, Paperclip, Calculator } from "lucide-react";
+import { X, Send, MessageCircle, ImageIcon, Mic, MicOff, Paperclip, Calculator } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -140,17 +140,47 @@ export default function ChatBot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
           aria-label="Open recipe assistant"
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            zIndex: 999999,
+            width: "56px",
+            height: "56px",
+            backgroundColor: "#16a34a",
+            borderRadius: "50%",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          }}
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle color="white" size={24} />
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[370px] max-w-[95vw] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-          style={{ height: "560px" }}
+        <div
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            zIndex: 999999,
+            width: "370px",
+            maxWidth: "95vw",
+            height: "560px",
+            backgroundColor: "white",
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+            border: "1px solid #f1f5f9",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
         >
           {/* Header */}
           <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
@@ -226,7 +256,10 @@ export default function ChatBot() {
             <div className="px-3 py-2 bg-white border-t border-gray-100 flex items-center gap-2">
               <img src={previewImage} alt="preview" className="h-12 w-12 object-cover rounded-lg" />
               <span className="text-xs text-gray-500 flex-1">Image ready to send</span>
-              <button onClick={() => { setPreviewImage(null); setSelectedImage(null); }} className="text-gray-400 hover:text-red-500">
+              <button
+                onClick={() => { setPreviewImage(null); setSelectedImage(null); }}
+                className="text-gray-400 hover:text-red-500"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -235,17 +268,15 @@ export default function ChatBot() {
           {/* Input Area */}
           <div className="px-3 py-3 bg-white border-t border-gray-100">
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
-              {/* Image upload */}
               <button
                 onClick={() => imageInputRef.current?.click()}
                 className="text-gray-400 hover:text-green-600 transition"
                 title="Upload food photo"
               >
-                <Image className="w-4 h-4" />
+                <ImageIcon className="w-4 h-4" />
               </button>
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
 
-              {/* File upload */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="text-gray-400 hover:text-green-600 transition"
@@ -255,7 +286,6 @@ export default function ChatBot() {
               </button>
               <input ref={fileInputRef} type="file" accept=".txt,.pdf,.csv" className="hidden" onChange={handleFileSelect} />
 
-              {/* Calorie shortcut */}
               <button
                 onClick={() => setInput("Calculate calories for: ")}
                 className="text-gray-400 hover:text-green-600 transition"
@@ -264,7 +294,6 @@ export default function ChatBot() {
                 <Calculator className="w-4 h-4" />
               </button>
 
-              {/* Text input */}
               <input
                 type="text"
                 value={input}
@@ -274,7 +303,6 @@ export default function ChatBot() {
                 className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400"
               />
 
-              {/* Voice input */}
               <button
                 onClick={toggleVoice}
                 className={`transition ${isRecording ? "text-red-500 animate-pulse" : "text-gray-400 hover:text-green-600"}`}
@@ -283,7 +311,6 @@ export default function ChatBot() {
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
 
-              {/* Send */}
               <button
                 onClick={() => sendMessage()}
                 disabled={isLoading}
