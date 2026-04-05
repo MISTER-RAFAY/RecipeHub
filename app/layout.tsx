@@ -5,6 +5,10 @@ import "./globals.css";
 import { Navigation } from "@/components/navigation"; 
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import ChatBot from "@/components/ChatBot";
+
+// inside RootLayout return, add before </ClerkProvider>:
+<ChatBot />
 
 const inter = Inter({ subsets: ["latin"] });
 

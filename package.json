@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
     "@clerk/nextjs": "^6.36.8",
     "@hookform/resolvers": "^3.10.0",
     "@paddle/paddle-js": "^1.6.1",
