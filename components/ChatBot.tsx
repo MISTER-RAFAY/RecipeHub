@@ -1,13 +1,43 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, MessageCircle, ImageIcon, Mic, MicOff, Paperclip, Calculator } from "lucide-react";
+import { X, Send, MessageCircle, ImageIcon, Mic, MicOff, Paperclip, Calculator, Crown } from "lucide-react";
+import Link from "next/link";
 
 type Message = {
   role: "user" | "assistant";
   text: string;
   image?: string;
 };
+
+const DAILY_LIMIT = 5;
+
+function getDailyUsage(): { count: number; date: string } {
+  if (typeof window === "undefined") return { count: 0, date: "" };
+  const stored = localStorage.getItem("chatbot_usage");
+  if (!stored) return { count: 0, date: "" };
+  return JSON.parse(stored);
+}
+
+function incrementDailyUsage(): number {
+  const today = new Date().toDateString();
+  const usage = getDailyUsage();
+  const newCount = usage.date === today ? usage.count + 1 : 1;
+  localStorage.setItem("chatbot_usage", JSON.stringify({ count: newCount, date: today }));
+  return newCount;
+}
+
+function getRemainingQuestions(): number {
+  const today = new Date().toDateString();
+  const usage = getDailyUsage();
+  if (usage.date !== today) return DAILY_LIMIT;
+  return Math.max(0, DAILY_LIMIT - usage.count);
+}
+
+function isPremiumUser(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("isPremium") === "true";
+}
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,11 +53,19 @@ export default function ChatBot() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [remaining, setRemaining] = useState(DAILY_LIMIT);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    setRemaining(getRemainingQuestions());
+    setIsPremium(isPremiumUser());
+  }, [isOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +74,12 @@ export default function ChatBot() {
   const sendMessage = async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText && !selectedImage && !selectedFile) return;
+
+    // Check limit for non-premium users
+    if (!isPremium && remaining <= 0) {
+      setShowPaywall(true);
+      return;
+    }
 
     const userMessage: Message = {
       role: "user",
@@ -47,6 +91,12 @@ export default function ChatBot() {
     setInput("");
     setPreviewImage(null);
     setIsLoading(true);
+
+    // Increment usage for non-premium users
+    if (!isPremium) {
+      const newCount = incrementDailyUsage();
+      setRemaining(Math.max(0, DAILY_LIMIT - newCount));
+    }
 
     try {
       const formData = new FormData();
@@ -193,13 +243,81 @@ export default function ChatBot() {
                 <p className="text-green-100 text-xs">Recipe & Calorie Assistant</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:text-green-100 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Usage counter */}
+              {!isPremium && (
+                <span className="text-xs text-green-100">
+                  {remaining}/{DAILY_LIMIT} left
+                </span>
+              )}
+              {isPremium && (
+                <span className="flex items-center gap-1 text-xs text-yellow-300">
+                  <Crown size={12} /> Premium
+                </span>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-white hover:text-green-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
+
+          {/* Paywall overlay */}
+          {showPaywall && (
+            <div style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: "rgba(255,255,255,0.97)",
+              zIndex: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
+              textAlign: "center",
+            }}>
+              <div style={{ fontSize: "48px", marginBottom: "16px" }}>👨‍🍳</div>
+              <h2 style={{ fontSize: "20px", fontWeight: 600, color: "#111", marginBottom: "8px" }}>
+                Daily limit reached
+              </h2>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>
+                You have used all 5 free questions for today.
+              </p>
+              <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "24px" }}>
+                Upgrade to Premium for unlimited recipe questions, calorie calculations and more.
+              </p>
+              <Link href="/pricing" onClick={() => setIsOpen(false)}>
+                <button style={{
+                  backgroundColor: "#16a34a",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  padding: "12px 24px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  width: "100%",
+                  marginBottom: "12px",
+                }}>
+                  Upgrade to Premium
+                </button>
+              </Link>
+              <button
+                onClick={() => setShowPaywall(false)}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  color: "#9ca3af",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                Come back tomorrow for 5 free questions
+              </button>
+            </div>
+          )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50">
@@ -267,6 +385,13 @@ export default function ChatBot() {
 
           {/* Input Area */}
           <div className="px-3 py-3 bg-white border-t border-gray-100">
+            {/* Limit warning */}
+            {!isPremium && remaining <= 2 && remaining > 0 && (
+              <p className="text-xs text-orange-500 mb-2 text-center">
+                ⚠️ {remaining} question{remaining === 1 ? "" : "s"} left today —{" "}
+                <Link href="/pricing" className="underline font-medium">upgrade for unlimited</Link>
+              </p>
+            )}
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
               <button
                 onClick={() => imageInputRef.current?.click()}
@@ -299,8 +424,9 @@ export default function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask about recipes or calories..."
-                className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400"
+                placeholder={remaining <= 0 && !isPremium ? "Limit reached — upgrade to continue" : "Ask about recipes or calories..."}
+                disabled={remaining <= 0 && !isPremium}
+                className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400 disabled:opacity-50"
               />
 
               <button
@@ -313,7 +439,7 @@ export default function ChatBot() {
 
               <button
                 onClick={() => sendMessage()}
-                disabled={isLoading}
+                disabled={isLoading || (remaining <= 0 && !isPremium)}
                 className="text-green-600 hover:text-green-700 disabled:opacity-40 transition"
               >
                 <Send className="w-4 h-4" />
