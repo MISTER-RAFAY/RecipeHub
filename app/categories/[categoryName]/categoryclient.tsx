@@ -134,8 +134,8 @@ const CategoryPage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold capitalize text-gray-900">{safeCategory.replace("-", " ")} Recipes</h1>
-          <Link href="/categories">
-            <Button variant="outline">← Back to Categories</Button>
+          <Link href="/">
+            <Button variant="outline">← Back to Home</Button>
           </Link>
         </div>
 

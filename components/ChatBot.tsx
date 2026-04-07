@@ -56,6 +56,7 @@ export default function ChatBot() {
   const [remaining, setRemaining] = useState(DAILY_LIMIT);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +69,13 @@ export default function ChatBot() {
   }, [isOpen]);
 
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -75,7 +83,6 @@ export default function ChatBot() {
     const messageText = text || input.trim();
     if (!messageText && !selectedImage && !selectedFile) return;
 
-    // Check limit for non-premium users
     if (!isPremium && remaining <= 0) {
       setShowPaywall(true);
       return;
@@ -92,7 +99,6 @@ export default function ChatBot() {
     setPreviewImage(null);
     setIsLoading(true);
 
-    // Increment usage for non-premium users
     if (!isPremium) {
       const newCount = incrementDailyUsage();
       setRemaining(Math.max(0, DAILY_LIMIT - newCount));
@@ -184,6 +190,40 @@ export default function ChatBot() {
     { label: "Identify food", prompt: "I uploaded a food photo. What is it and how do I make it?" },
   ];
 
+  const chatWindowStyle: React.CSSProperties = isMobile
+    ? {
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 999999,
+        width: "100%",
+        height: "90vh",
+        backgroundColor: "white",
+        borderRadius: "16px 16px 0 0",
+        boxShadow: "0 -4px 32px rgba(0,0,0,0.18)",
+        border: "1px solid #f1f5f9",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }
+    : {
+        position: "fixed",
+        bottom: "24px",
+        right: "24px",
+        zIndex: 999999,
+        width: "370px",
+        maxWidth: "95vw",
+        height: "560px",
+        backgroundColor: "white",
+        borderRadius: "16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+        border: "1px solid #f1f5f9",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      };
+
   return (
     <>
       {/* Floating Bubble */}
@@ -214,24 +254,7 @@ export default function ChatBot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            zIndex: 999999,
-            width: "370px",
-            maxWidth: "95vw",
-            height: "560px",
-            backgroundColor: "white",
-            borderRadius: "16px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-            border: "1px solid #f1f5f9",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <div style={chatWindowStyle}>
           {/* Header */}
           <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -244,7 +267,6 @@ export default function ChatBot() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Usage counter */}
               {!isPremium && (
                 <span className="text-xs text-green-100">
                   {remaining}/{DAILY_LIMIT} left
@@ -385,7 +407,6 @@ export default function ChatBot() {
 
           {/* Input Area */}
           <div className="px-3 py-3 bg-white border-t border-gray-100">
-            {/* Limit warning */}
             {!isPremium && remaining <= 2 && remaining > 0 && (
               <p className="text-xs text-orange-500 mb-2 text-center">
                 ⚠️ {remaining} question{remaining === 1 ? "" : "s"} left today —{" "}
