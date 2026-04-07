@@ -131,8 +131,8 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-gray-50 relative">
       <div className="container mx-auto py-12 px-4">
         
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        {/* Header — always on top, never covered by overlay */}
+        <div className="relative z-50 flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold capitalize text-gray-900">{safeCategory.replace("-", " ")} Recipes</h1>
           <Link href="/">
             <Button variant="outline">← Back to Home</Button>
@@ -183,9 +183,12 @@ const CategoryPage = () => {
           )}
         </div>
 
-        {/* Lock overlay */}
+        {/* Lock overlay — starts below header */}
         {!isPremium && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pt-20">
+          <div
+            className="absolute inset-x-0 bottom-0 z-40 flex flex-col items-center justify-center"
+            style={{ top: "80px" }}
+          >
             <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg w-full border border-gray-100 animate-in zoom-in-95 duration-300">
               <div className="text-6xl mb-6">🔒</div>
               <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Premium Content</h2>
